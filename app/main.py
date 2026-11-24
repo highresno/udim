@@ -39,6 +39,8 @@ def selftest() -> int:
     for fmt, ch, depth, codec in combos:
         s = core.ExportSettings(name="T", out_root=os.path.join(tmp, "out"), tiles_x=3, tiles_y=2, scales=[1, 4],
                                 fmt=fmt, channels=ch, bit_depth=depth, exr_codec=codec)
+        est = core.estimate_sizes(src, s)
+        assert all(sum(v) > 0 for v in est.values()), est
         for folder in core.export(src, s):
             n += len(os.listdir(folder))
     print(f"selftest ok: {n} filer i {tmp}")
@@ -66,17 +68,18 @@ def main() -> int:
     from api import Api
     from build_info import VERSION
 
-    api = Api()
+    api = Api(startup_paths=[a for a in sys.argv[1:] if not a.startswith("-")])
     window = webview.create_window(
         f"UDIM Tiler {VERSION}", url=resource("ui", "index.html"), js_api=api,
-        width=1440, height=900, min_size=(980, 640), background_color="#eef0f4",
+        width=1440, height=900, min_size=(1180, 680), background_color="#eef0f4",
     )
     api.attach(window)
 
     def on_drop(e):
         files = (e.get("dataTransfer") or {}).get("files") or []
-        if files and files[0].get("pywebviewFullPath"):
-            api.push_dropped(files[0]["pywebviewFullPath"])
+        paths = [f["pywebviewFullPath"] for f in files if f.get("pywebviewFullPath")]
+        if paths:
+            api.push_dropped(paths)
 
     def on_loaded():
         try:
@@ -84,7 +87,14 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             print("Drag and drop not available:", e)
 
-    window.events.loaded += on_loaded
+    loaded_once = []
+
+    def on_loaded_once():
+        if not loaded_once:
+            loaded_once.append(1)
+            on_loaded()
+
+    window.events.loaded += on_loaded_once
     webview.start(private_mode=False)
     return 0
 

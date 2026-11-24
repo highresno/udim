@@ -295,3 +295,70 @@ def export(src: SourceImage, s: ExportSettings, progress=None, cancelled=None) -
                 if progress:
                     progress(done, total, fname)
     return folders
+
+
+# --------------------------------------------------------------------------- #
+# Estimert filstørrelse
+# --------------------------------------------------------------------------- #
+def _tile_source_rect(src_w, src_h, s, u, v):
+    """Tile (u, v) som rektangel i kildepiksler (x0, y0, x1, y1), y fra toppen.
+    Kan gå utenfor bildet ved utfylling."""
+    tw, th = base_tile_size(src_w, src_h, s)
+    cw, ch = tw * s.tiles_x, th * s.tiles_y
+    if s.fit_mode == "stretch":
+        kx, ky = src_w / cw, src_h / ch
+        x0, x1 = u * tw * kx, (u + 1) * tw * kx
+        y1 = src_h - v * th * ky
+        return x0, y1 - th * ky, x1, y1
+    # pad/crop: forankret nede til venstre
+    x0, x1 = u * tw, (u + 1) * tw
+    y1 = src_h - v * th
+    return x0, y1 - th, x1, y1
+
+
+def _crop_padded(px, x0, y0, x1, y1):
+    """Utsnitt med nullfyll der rektangelet går utenfor bildet."""
+    h, w, c = px.shape
+    x0, y0, x1, y1 = (int(round(t)) for t in (x0, y0, x1, y1))
+    out = np.zeros((max(1, y1 - y0), max(1, x1 - x0), c), np.float32)
+    sx0, sy0, sx1, sy1 = max(0, x0), max(0, y0), min(w, x1), min(h, y1)
+    if sx1 > sx0 and sy1 > sy0:
+        out[sy0 - y0:sy1 - y0, sx0 - x0:sx1 - x0] = px[sy0:sy1, sx0:sx1]
+    return out
+
+
+def estimate_sizes(src: SourceImage, s: ExportSettings, sample: int = 256, max_samples: int = 24) -> dict:
+    """Anslår filstørrelse per tile ved å kode et utsnitt fra midten av tilen
+    med de valgte innstillingene og skalere opp fra byte per piksel.
+    Returnerer {divisor: [bytes per tile, indeks v * tiles_x + u]}."""
+    import tempfile
+    src_linear = {"auto": src.is_linear, "srgb": False, "linear": True}[s.source_space]
+    n = s.tiles_x * s.tiles_y
+    tmpdir = tempfile.mkdtemp(prefix="udim_est_")
+    path = os.path.join(tmpdir, "t." + ext_for(s.fmt))
+    result = {}
+    try:
+        for d in s.scales:
+            tw_s, th_s = tile_size(src.width, src.height, s, d)
+            step = max(1, math.ceil(n / max_samples))
+            sampled = {}
+            for i in range(0, n, step):
+                v, u = divmod(i, s.tiles_x)
+                x0, y0, x1, y1 = _tile_source_rect(src.width, src.height, s, u, v)
+                # utsnittets størrelse i ferdige piksler, og tilsvarende i kildepiksler
+                ow, oh = min(sample, tw_s), min(sample, th_s)
+                kx, ky = (x1 - x0) / tw_s, (y1 - y0) / th_s
+                cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+                crop = _crop_padded(src.pixels, cx - ow * kx / 2, cy - oh * ky / 2, cx + ow * kx / 2, cy + oh * ky / 2)
+                crop = resize(crop, ow, oh, s.filter_name)
+                crop = apply_color(convert_channels(crop, s.channels), src_linear, s)
+                write_tile(path, crop, s)
+                bpp = os.path.getsize(path) / (ow * oh)
+                sampled[i] = bpp * tw_s * th_s
+            mean = sum(sampled.values()) / len(sampled)
+            result[d] = [int(sampled.get(i, mean)) for i in range(n)]
+    finally:
+        for f in os.listdir(tmpdir):
+            os.remove(os.path.join(tmpdir, f))
+        os.rmdir(tmpdir)
+    return result

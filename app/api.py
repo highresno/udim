@@ -1,10 +1,12 @@
 """Broen mellom brukergrensesnittet (HTML/JS) og bildelogikken (Python).
 
 Alle offentlige metoder kalles fra JavaScript som window.pywebview.api.<navn>(...).
+Hver åpne fane er et "dokument" med egen id og eget kildebilde.
 """
 from __future__ import annotations
 
 import base64
+import itertools
 import json
 import os
 import subprocess
@@ -19,12 +21,14 @@ import updater
 from build_info import COMMIT, VERSION
 
 IMAGE_TYPES = ("Images (*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.exr;*.tga;*.bmp;*.psd;*.hdr)", "All files (*.*)")
+PROJECT_EXT = ".udimt"
+PROJECT_TYPES = ("UDIM Tiler project (*.udimt)",)
 PREVIEW_MAX = 1800
 
 
 def to_settings(d: dict) -> core.ExportSettings:
     return core.ExportSettings(
-        name=(d.get("name") or "Navn").strip(),
+        name=(d.get("name") or "Name").strip(),
         out_root=(d.get("out") or "").strip(),
         tiles_x=int(d["tx"]), tiles_y=int(d["ty"]),
         fit_mode=d.get("fit", "pad"),
@@ -68,16 +72,24 @@ def make_preview(src: core.SourceImage) -> str:
         os.remove(tmp)
 
 
+def _first(res):
+    if not res:
+        return None
+    return res[0] if isinstance(res, (list, tuple)) else res
+
+
 class Api:
-    def __init__(self):
+    def __init__(self, startup_paths: list[str] | None = None):
         self._window = None
-        self._src: core.SourceImage | None = None
+        self._docs: dict[str, core.SourceImage] = {}
+        self._ids = itertools.count(1)
         self._lock = threading.Lock()
+        self._est_gen: dict[str, int] = {}
+        self._startup = list(startup_paths or [])
 
     def attach(self, window):
         self._window = window
 
-    # ---------- hjelpere ----------
     def _js(self, fn: str, *args):
         if self._window:
             self._window.evaluate_js(f"{fn}({','.join(json.dumps(a) for a in args)})")
@@ -86,36 +98,101 @@ class Api:
     def info(self):
         return {"version": VERSION, "commit": COMMIT[:7], "platform": sys.platform}
 
-    # ---------- kilde ----------
-    def open_image(self):
+    def startup_files(self):
+        """Filer appen ble startet med (dobbeltklikk på .udimt eller et bilde)."""
+        paths, self._startup = self._startup, []
+        return [os.path.abspath(p) for p in paths if os.path.exists(p)]
+
+    # ---------- bilder ----------
+    def open_images(self):
         import webview
-        res = self._window.create_file_dialog(webview.OPEN_DIALOG, file_types=IMAGE_TYPES)
-        if not res:
-            return None
-        return self.load_path(res[0] if isinstance(res, (list, tuple)) else res)
+        res = self._window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True, file_types=IMAGE_TYPES)
+        return [self.load_path(p) for p in (res or [])]
 
     def load_path(self, path: str):
         try:
+            src = core.load_image(path)
+            doc = f"d{next(self._ids)}"
             with self._lock:
-                self._src = core.load_image(path)
-                src = self._src
-            return {"ok": True, "path": path, "label": os.path.basename(path), "name": src.name,
-                    "width": src.width, "height": src.height, "channels": src.channels,
+                self._docs[doc] = src
+            return {"ok": True, "doc": doc, "path": os.path.abspath(path), "label": os.path.basename(path),
+                    "name": src.name, "width": src.width, "height": src.height, "channels": src.channels,
                     "linear": src.is_linear, "preview": make_preview(src)}
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"Could not open {os.path.basename(path)}: {e}"}
+            return {"ok": False, "path": path, "error": f"Could not open {os.path.basename(path)}: {e}"}
 
-    def push_dropped(self, path: str):
-        """Kalles fra Python når en fil slippes i vinduet."""
-        self._js("window.onNativeImage", self.load_path(path))
+    def close_doc(self, doc: str):
+        with self._lock:
+            self._docs.pop(doc, None)
+        return True
+
+    def push_dropped(self, paths: list[str]):
+        """Kalles fra Python når filer slippes i vinduet."""
+        self._js("window.onNativeDrop", paths)
+
+    # ---------- prosjekt ----------
+    def save_project(self, data: dict, path: str | None = None, save_as: bool = False):
+        import webview
+        if save_as or not path:
+            start = os.path.dirname(path) if path else ""
+            fname = os.path.basename(path) if path else "Untitled" + PROJECT_EXT
+            path = _first(self._window.create_file_dialog(webview.SAVE_DIALOG, directory=start,
+                                                          save_filename=fname, file_types=PROJECT_TYPES))
+            if not path:
+                return None
+        if not path.lower().endswith(PROJECT_EXT):
+            path += PROJECT_EXT
+        base = os.path.dirname(os.path.abspath(path))
+        tabs = []
+        for t in data.get("tabs", []):
+            img = t.get("image", "")
+            try:
+                rel = os.path.relpath(img, base)
+            except ValueError:  # annen disk på Windows
+                rel = None
+            tabs.append({**t, "imageRelative": rel})
+        doc = {"app": "UDIM Tiler", "format": 1, "version": VERSION, "active": data.get("active", 0), "tabs": tabs}
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(doc, f, indent=2, ensure_ascii=False)
+        except OSError as e:
+            return {"ok": False, "error": f"Could not save project: {e}"}
+        return {"ok": True, "path": path, "label": os.path.basename(path)}
+
+    def choose_project(self):
+        import webview
+        return _first(self._window.create_file_dialog(webview.OPEN_DIALOG, file_types=PROJECT_TYPES))
+
+    def open_project(self, path: str):
+        """Leser prosjektfilen og laster bildene. Bilder som mangler rapporteres."""
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": f"Could not read project: {e}"}
+        base = os.path.dirname(os.path.abspath(path))
+        tabs, missing = [], []
+        for t in data.get("tabs", []):
+            candidates = [t.get("image", "")]
+            if t.get("imageRelative"):
+                candidates.insert(0, os.path.normpath(os.path.join(base, t["imageRelative"])))
+            img = next((c for c in candidates if c and os.path.exists(c)), None)
+            if not img:
+                missing.append(t.get("image") or "?")
+                continue
+            r = self.load_path(img)
+            if r["ok"]:
+                tabs.append({"image": r, "settings": t.get("settings", {})})
+            else:
+                missing.append(img)
+        return {"ok": True, "path": path, "label": os.path.basename(path), "active": data.get("active", 0),
+                "tabs": tabs, "missing": missing}
 
     # ---------- utdata ----------
     def choose_folder(self, current: str = ""):
         import webview
-        res = self._window.create_file_dialog(webview.FOLDER_DIALOG, directory=current if os.path.isdir(current or "") else "")
-        if not res:
-            return None
-        return res[0] if isinstance(res, (list, tuple)) else res
+        return _first(self._window.create_file_dialog(webview.FOLDER_DIALOG,
+                                                      directory=current if os.path.isdir(current or "") else ""))
 
     def open_folder(self, path: str):
         if not os.path.isdir(path):
@@ -128,21 +205,41 @@ class Api:
             subprocess.Popen(["xdg-open", path])
         return True
 
+    # ---------- størrelse ----------
+    def estimate(self, settings: dict):
+        """Anslått byte per tile. Eldre forespørsler for samme fane avbrytes."""
+        doc = settings.get("doc")
+        src = self._docs.get(doc)
+        if not src:
+            return None
+        gen = self._est_gen.get(doc, 0) + 1
+        self._est_gen[doc] = gen
+        try:
+            sizes = core.estimate_sizes(src, to_settings(settings))
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+        if self._est_gen.get(doc) != gen:
+            return None  # utdatert
+        return {"ok": True, "doc": doc, "sizes": {str(k): v for k, v in sizes.items()}}
+
     # ---------- eksport ----------
     def count_existing(self, settings: dict) -> int:
-        if not self._src:
+        src = self._docs.get(settings.get("doc"))
+        if not src:
             return 0
-        return len(core.existing_files(self._src.width, self._src.height, to_settings(settings)))
+        return len(core.existing_files(src.width, src.height, to_settings(settings)))
 
     def export(self, settings: dict):
-        if not self._src:
+        src = self._docs.get(settings.get("doc"))
+        if not src:
             return {"ok": False, "error": "Import an image first."}
         s = to_settings(settings)
         if not s.out_root:
             return {"ok": False, "error": "Choose an output folder."}
         try:
-            folders = core.export(self._src, s, progress=lambda d, t, m: self._js("window.onExportProgress", d, t, m))
-            return {"ok": True, "folders": folders}
+            folders = core.export(src, s, progress=lambda d, t, m: self._js("window.onExportProgress", d, t, m))
+            sizes = {f: {x: os.path.getsize(os.path.join(f, x)) for x in os.listdir(f)} for f in folders}
+            return {"ok": True, "folders": folders, "sizes": sizes}
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "error": str(e)}
 

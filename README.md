@@ -18,6 +18,8 @@ Hver push til `main` bygger en ny installer (tar ca. 5–10 minutter) og publise
 
 - Åpne eller dra inn PNG, JPG, TIFF, EXR, TGA, PSD, HDR m.fl.
 - UDIM-nummerering 1001 nede til venstre, 10 per rad (maks 10 i X).
+- Flere bilder i faner, og prosjekter lagres som `.udimt` (dobbeltklikk åpner dem i appen).
+- Listen til venstre viser mapper og filer med anslått filstørrelse per tile, og faktisk størrelse etter eksport.
 - Ujevn deling: fyll ut, beskjær eller strekk.
 - Oppløsninger 1:1, 1/2, 1/4, 1/8, gjerne flere samtidig. Hele bildet skaleres før deling, så det blir ingen skjøter.
 - PNG: BW/RGB/RGBA, 8/16 bit, komprimering. EXR: BW/RGB/RGBA, half/float, 10 codecs med nivå for zip/dwa. JPG: BW/RGB, kvalitet.

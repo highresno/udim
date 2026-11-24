@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: full-window tool. Start screen with one import drop zone; then a large preview with floating X×Y controls, a calm settings panel on the right and an always-visible export button. Light theme only. */
+/* Layout: full-window tool. Start screen with one import drop zone. Then: tab bar on top, output list on the left, large preview in the middle with floating X×Y controls, settings on the right with an always-visible export button. Light theme only. */
 :root {
   --bg: #eef0f4; --surface: #ffffff; --raised: #f3f5f9; --hover: #e7eaf1; --line: #dde1e9;
   --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
@@ -24,22 +24,10 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
-@media (max-width: 920px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 56vh auto; height: auto; } }
 
 /* ---------- Toppfelt ---------- */
-.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 110px; min-height: 42px; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; }
 .brand svg { color: var(--accent); }
-.src { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 14px 5px 5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; transition: border-color .15s; }
-.src:hover { border-color: var(--accent); }
-.src canvas { width: 30px; height: 30px; border-radius: 50%; display: block; flex: none; }
-.src .meta { display: grid; min-width: 0; text-align: left; line-height: 1.2; }
-.src .meta b { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.src .meta span { font: 11px var(--mono); color: var(--muted); }
-.spacer { flex: 1; }
-.proto { font-size: 11px; color: var(--muted); white-space: nowrap; }
-@media (max-width: 640px) { .proto { display: none; } }
 
 /* ---------- Visning ---------- */
 .view { position: relative; min-height: 0; border-radius: 14px; overflow: hidden; background: radial-gradient(circle at 50% 40%, var(--raised), var(--bg) 75%); border: 1px solid var(--line); }
@@ -140,9 +128,6 @@ details.adv summary svg { transition: transform .2s; }
 details.adv[open] summary svg { transform: rotate(90deg); }
 details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 
-.path { font: 11.5px/1.7 var(--mono); background: var(--bg); border-radius: 10px; padding: 10px 12px; overflow-x: auto; white-space: pre; color: var(--muted); }
-.path .f { color: var(--fg); }
-.path .n { color: var(--accent); }
 
 .foot { padding: 12px 18px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; background: var(--surface); }
 .summary { font: 11px var(--mono); color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
@@ -156,31 +141,6 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .confirm button { border: 0; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; background: var(--raised); }
 .confirm button.yes { background: var(--accent); color: var(--accent-fg); }
 
-/* ---------- Resultatark ---------- */
-.sheet-bg { position: fixed; inset: 0; background: rgba(20,24,34,.28); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
-.sheet { position: fixed; z-index: 21; right: max(12px, env(safe-area-inset-right, 0px)); top: max(12px, env(safe-area-inset-top, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  width: min(560px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr); transform: translateX(calc(100% + 30px)); visibility: hidden; transition: transform .28s cubic-bezier(.3,.7,.2,1), visibility 0s .28s; }
-.sheet.open { transform: none; visibility: visible; transition: transform .28s cubic-bezier(.3,.7,.2,1); }
-.sheet-bg.open { opacity: 1; pointer-events: auto; }
-.sheet header { display: flex; align-items: center; gap: 10px; padding: 16px 18px 6px; }
-.sheet header h2 { margin: 0; font-size: 16px; flex: 1; display: flex; align-items: center; gap: 10px; }
-.sheet header h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 20%, transparent); }
-.x { width: 32px; height: 32px; border: 0; border-radius: 9px; background: var(--raised); color: var(--muted); display: grid; place-items: center; }
-.x:hover { background: var(--hover); color: var(--fg); }
-.tabs { display: flex; gap: 4px; padding: 6px 18px 10px; overflow-x: auto; }
-.tab { border: 0; border-radius: 8px; padding: 6px 10px; background: transparent; color: var(--muted); font: 12px var(--mono); white-space: nowrap; }
-.tab:hover { background: var(--raised); }
-.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
-.sheet-body { overflow: auto; padding: 0 18px 18px; }
-.folder-path { font: 11.5px var(--mono); color: var(--muted); word-break: break-all; margin-bottom: 12px; }
-.folder-path b { color: var(--fg); font-weight: 500; }
-.tiles { display: grid; gap: 6px; }
-.tile { display: grid; gap: 4px; min-width: 0; }
-.tile canvas { width: 100%; height: auto; border-radius: 6px; display: block; background: var(--raised); }
-.tile span { font: 10.5px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tile span b { color: var(--accent); font-weight: 500; }
-.sheet-note { font-size: 12px; color: var(--faint); margin: 14px 0 0; }
 
 .upd-wrap { position: fixed; z-index: 60; top: max(14px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }
 .upd { display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 600; transition: border-color .15s, color .15s; }
@@ -201,7 +161,7 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .upd-go span { position: relative; }
 .openf { border: 0; border-radius: 9px; padding: 7px 12px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
 .openf:hover { background: var(--accent); color: var(--accent-fg); }
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 40; background: var(--surface); border: 1px solid var(--warn); color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 13px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 40; background: var(--surface); border: 1px solid var(--warn); color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 13px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
 .start { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bg);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; }
 .start-brand { position: absolute; top: max(18px, env(safe-area-inset-top, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); }
@@ -216,6 +176,84 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .import:hover { filter: brightness(1.08); }
 .import:active { transform: scale(.98); }
 .drop .err { color: var(--warn); font-size: 13px; min-height: 1.2em; }
+
+/* ---------- Ramme ---------- */
+.app { height: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+@media (max-width: 1100px) { .app { grid-template-columns: minmax(0, 1fr) 320px; grid-template-rows: auto minmax(0, 1fr) auto; } .out { grid-column: 1 / -1; grid-row: 3; max-height: 50vh; } }
+@media (max-width: 760px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 56vh auto auto; height: auto; } .out { grid-row: auto; } }
+
+/* ---------- Toppfelt med faner ---------- */
+.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; min-width: 0; padding-right: 110px; min-height: 42px; }
+.tabbar { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.tabbar::-webkit-scrollbar { display: none; }
+.dtab { display: flex; align-items: center; gap: 8px; flex: none; max-width: 240px; padding: 4px 6px 4px 4px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: var(--muted); transition: background .15s, border-color .15s, color .15s; }
+.dtab:hover { background: var(--surface); color: var(--fg); }
+.dtab.on { background: var(--surface); border-color: var(--line); color: var(--fg); box-shadow: 0 1px 3px rgba(20,28,48,.06); }
+.dtab img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; background: var(--raised); }
+.dtab .meta { display: grid; min-width: 0; text-align: left; line-height: 1.2; }
+.dtab .meta b { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dtab .meta span { font: 10.5px var(--mono); color: var(--faint); }
+.dtab .close { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--faint); flex: none; }
+.dtab .close:hover { background: var(--hover); color: var(--fg); }
+.addtab { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 1px dashed var(--line); background: transparent; color: var(--muted); display: grid; place-items: center; transition: border-color .15s, color .15s, background .15s; }
+.addtab:hover { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+
+.menu-wrap { position: relative; flex: none; }
+.projbtn { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 600; color: var(--fg); max-width: 240px; }
+.projbtn:hover { border-color: var(--accent); }
+.projbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projbtn .dirty { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 250px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: var(--shadow); display: grid; }
+.menu button { display: flex; justify-content: space-between; gap: 16px; border: 0; background: transparent; text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+.menu button:hover:not(:disabled) { background: var(--raised); }
+.menu button:disabled { opacity: .4; cursor: default; }
+.menu kbd { font: 11px var(--mono); color: var(--faint); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+
+/* ---------- Utdataliste ---------- */
+.out { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.out-head { padding: 16px 16px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.out-head h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); display: flex; justify-content: space-between; align-items: baseline; }
+.out-total { font: 600 20px var(--font); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.out-total small { font: 12px var(--mono); color: var(--muted); font-weight: 400; margin-left: 6px; }
+.out-root { font: 11px/1.5 var(--mono); color: var(--muted); word-break: break-all; }
+.out-root.none { color: var(--warn); font-family: var(--font); }
+.out-list { overflow-y: auto; padding: 10px; display: grid; gap: 10px; align-content: start; scrollbar-width: thin; }
+.fold { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.fold-h { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 10px 10px 12px; background: var(--raised); cursor: pointer; user-select: none; }
+.fold-h .chev { margin-top: 3px; color: var(--faint); transition: transform .2s; }
+.fold.open .fold-h .chev { transform: rotate(90deg); }
+.fold-name { font: 500 11.5px/1.45 var(--mono); word-break: break-all; color: var(--fg); }
+.fold-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; }
+.tag { font: 10.5px var(--mono); padding: 2px 7px; border-radius: 999px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.tag.size { color: var(--fg); }
+.tag.done { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, transparent); }
+.fold-open { border: 0; background: transparent; color: var(--accent); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; }
+.fold-open:hover { background: var(--accent-soft); }
+.files { display: none; }
+.fold.open .files { display: block; }
+.frow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 10px 6px 12px; border-top: 1px solid var(--line); font-size: 12px; cursor: default; transition: background .1s; }
+.frow:hover, .frow.hl { background: var(--accent-soft); }
+.frow .u { font: 500 11px var(--mono); color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 2px 6px; }
+.frow .fn { font: 11.5px var(--mono); color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frow .sz { font: 11px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.frow .sz.real { color: var(--ok); }
+.est { display: inline-block; width: 46px; height: 9px; border-radius: 5px; background: linear-gradient(90deg, var(--raised), var(--hover), var(--raised)); background-size: 200% 100%; animation: shimmer 1.1s linear infinite; vertical-align: middle; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.out-note { font-size: 11px; color: var(--faint); padding: 10px 16px 12px; border-top: 1px solid var(--line); }
+.out-list .out-note { border: 0; padding: 4px; }
+
+/* ---------- Dialog ---------- */
+.modal-bg { position: fixed; inset: 0; z-index: 70; background: rgba(20,24,34,.28); display: grid; place-items: center; padding: 16px; }
+.modal { width: min(400px, 100%); background: var(--surface); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); display: grid; gap: 14px; }
+.modal h2 { margin: 0; font-size: 16px; }
+.modal p { margin: 0; color: var(--muted); font-size: 13px; white-space: pre-line; overflow-wrap: anywhere; }
+.modal .acts { display: flex; justify-content: flex-end; gap: 8px; }
+.modal button { border: 0; border-radius: 10px; padding: 9px 14px; font-weight: 600; background: var(--raised); }
+.modal button.yes { background: var(--accent); color: var(--accent-fg); }
+.toast.ok { border-color: var(--ok); }
+.import.secondary { background: transparent; color: var(--accent); padding: 6px 12px; font-size: 13px; }
+.import.secondary:hover { background: var(--accent-soft); filter: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 </style>
 
@@ -229,6 +267,7 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
     <h1>Import an image to split into UDIM tiles</h1>
     <p>Drag and drop an image here, or</p>
     <button type="button" class="import" id="importBtn">Import image</button>
+    <button type="button" class="import secondary" id="openProjBtn">Open project…</button>
     <span class="formats" id="formats">EXR · TIFF · PNG · JPG · PSD · TGA · HDR</span>
     <span class="err" id="startErr"></span>
   </div>
@@ -251,14 +290,29 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="11" width="8" height="8" rx="2" fill="currentColor"/><rect x="11" y="11" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
       UDIM Tiler
     </div>
-    <button class="src" id="srcBtn" type="button" title="Open another image, or drop one onto the preview">
-      <canvas id="srcThumb" width="60" height="60"></canvas>
-      <span class="meta"><b id="srcName"></b><span id="srcSize"></span></span>
-    </button>
-    <input type="file" id="file" accept="image/*" hidden>
-    <div class="spacer"></div>
-    <span class="proto" id="protoNote">Browser preview · export is simulated</span>
+    <div class="tabbar" id="tabbar" role="tablist" aria-label="Open images"></div>
+    <span class="proto" id="protoNote" style="font-size:11px;color:var(--muted);white-space:nowrap">Browser preview · export is simulated</span>
+    <div class="menu-wrap">
+      <button type="button" class="projbtn" id="projBtn" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.5 4.5a1 1 0 0 1 1-1h3.6l1.6 1.6h5.8a1 1 0 0 1 1 1v6.4a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1z"/></svg><span id="projName">Untitled project</span><i class="dirty" id="projDirty" title="Unsaved changes" hidden></i></button>
+      <div class="menu" id="menu" role="menu" hidden>
+        <button type="button" role="menuitem" id="mImport">Import images…<kbd>Ctrl+I</kbd></button>
+        <hr>
+        <button type="button" role="menuitem" id="mOpen">Open project…<kbd>Ctrl+O</kbd></button>
+        <button type="button" role="menuitem" id="mSave">Save project<kbd>Ctrl+S</kbd></button>
+        <button type="button" role="menuitem" id="mSaveAs">Save project as…<kbd>Ctrl+Shift+S</kbd></button>
+      </div>
+    </div>
   </div>
+
+  <aside class="out" aria-label="Output files">
+    <div class="out-head">
+      <h3>Output</h3>
+      <div class="out-total" id="outTotal">–</div>
+      <div class="out-root" id="outRoot"></div>
+    </div>
+    <div class="out-list" id="outList"></div>
+    <div class="out-note" id="estNote"></div>
+  </aside>
 
   <main class="view" id="view">
     <canvas id="cv" aria-label="Preview with UDIM grid"></canvas>
@@ -361,7 +415,6 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
             <label><input type="radio" name="sep" value="_" checked>Name_1001</label>
             <label><input type="radio" name="sep" value=".">Name.1001</label>
           </div></div>
-        <div class="path" id="path"></div>
         <details class="adv">
           <summary><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Advanced</summary>
           <div class="inner">
@@ -384,47 +437,101 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
   </form>
 </div>
 
-<div class="toast" id="toast" hidden></div>
-<div class="sheet-bg" id="sheetBg"></div>
-<aside class="sheet" id="sheet" aria-label="Export result">
-  <header><h2><span class="dot"></span><span id="sheetTitle">Exported</span></h2><button type="button" class="x" id="sheetX" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></header>
-  <div class="tabs" id="tabs" role="tablist"></div>
-  <div class="sheet-body" id="sheetBody"></div>
-</aside>
+<input type="file" id="file" accept="image/*" multiple hidden>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="modal-bg" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h2 id="mTitle"></h2><p id="mText"></p>
+    <div class="acts"><button type="button" id="mCancel">Cancel</button><button type="button" class="yes" id="mOk">OK</button></div>
+  </div>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
 const cv = $("cv"), ctx = cv.getContext("2d");
-let src, proxy;
-const exported = new Set();
-const state = { tx: 3, ty: 2 };
-const anim = { tx: 3, ty: 2, k: 0, ox: 0, oy: 0 };
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const anim = { tx: 3, ty: 2, k: 0, ox: 0, oy: 0 };
+let APP = false;
+const api = () => window.pywebview.api;
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 
-function setSource(img, name, label, realW, realH) {
-  src = img;
-  const W = realW || img.naturalWidth || img.width, H = realH || img.naturalHeight || img.height;
-  src.W = W; src.H = H;
-  const s = Math.min(1, 1800 / Math.max(W, H));
-  proxy = document.createElement("canvas"); proxy.width = Math.max(1, Math.round(W * s)); proxy.height = Math.max(1, Math.round(H * s));
+// ---------- Dokumenter (faner) og prosjekt ----------
+const docs = [];            // { id, label, path, W, H, img, proxy, thumb, settings, est, actual, exported }
+let cur = null;             // aktivt dokument
+const project = { path: null, label: null, dirty: false };
+let localIds = 0;
+
+const DEFAULTS = { tx: 2, ty: 1, fit: "pad", scales: [1], fmt: "PNG", ch: "RGB", depth: "8", codec: "zip", comp: 50,
+  sep: "_", space: "auto", convert: true, filter: "Lanczos" };
+
+function addDoc(img, info) {
+  const W = info.width || img.naturalWidth, H = info.height || img.naturalHeight;
+  const s = Math.min(1, 1800 / Math.max(img.naturalWidth, img.naturalHeight));
+  const proxy = document.createElement("canvas"); proxy.width = Math.max(1, Math.round(img.naturalWidth * s)); proxy.height = Math.max(1, Math.round(img.naturalHeight * s));
   proxy.getContext("2d").drawImage(img, 0, 0, proxy.width, proxy.height);
-  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, t = $("srcThumb").getContext("2d"), m = Math.min(iw, ih);
-  t.clearRect(0, 0, 60, 60); t.drawImage(img, (iw - m) / 2, (ih - m) / 2, m, m, 0, 0, 60, 60);
-  $("srcName").textContent = label; $("srcSize").textContent = `${W}×${H}`;
-  $("name").value = name; exported.clear(); anim.k = 0;
-  $("start").hidden = true; $("app").hidden = false; $("startErr").textContent = "";
-  update();
+  const tc = document.createElement("canvas"); tc.width = tc.height = 56; const m = Math.min(img.naturalWidth, img.naturalHeight);
+  tc.getContext("2d").drawImage(img, (img.naturalWidth - m) / 2, (img.naturalHeight - m) / 2, m, m, 0, 0, 56, 56);
+  const d = { id: info.doc || "local" + (++localIds), label: info.label, path: info.path || null, W, H, img, proxy, thumb: tc.toDataURL(),
+    settings: { ...DEFAULTS, name: info.name, out: lsGet("outDir") || "", ...(info.settings || {}) }, est: null, actual: null, exported: new Set() };
+  docs.push(d); setDirty(true);
+  return d;
+}
+function activate(d) {
+  cur = d; anim.k = 0;
+  writeForm(d.settings);
+  $("start").hidden = !!d; $("app").hidden = !d;
+  renderTabs(); update();
+}
+async function closeDoc(d) {
+  const i = docs.indexOf(d); if (i < 0) return;
+  docs.splice(i, 1);
+  if (APP && !d.id.startsWith("local")) api().close_doc(d.id);
+  setDirty(docs.length > 0);
+  if (!docs.length) { project.path = null; project.label = null; setDirty(false); cur = null; $("app").hidden = true; $("start").hidden = false; renderTabs(); return; }
+  if (cur === d) activate(docs[Math.min(i, docs.length - 1)]); else renderTabs();
+}
+function setDirty(v) { project.dirty = v; renderProject(); }
+function renderProject() {
+  $("projName").textContent = project.label ? project.label.replace(/\.udimt$/i, "") : "Untitled project";
+  $("projDirty").hidden = !project.dirty || !docs.length;
+}
+function renderTabs() {
+  const bar = $("tabbar");
+  bar.innerHTML = docs.map((d, i) => `<div class="dtab${d === cur ? " on" : ""}" role="tab" aria-selected="${d === cur}" tabindex="0" data-i="${i}" title="${esc(d.path || d.label)}">
+    <img src="${d.thumb}" alt=""><span class="meta"><b>${esc(d.label)}</b><span>${d.W}×${d.H}</span></span>
+    <span class="close" data-close="${i}" role="button" aria-label="Close ${esc(d.label)}"><svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></div>`).join("")
+    + `<button type="button" class="addtab" id="addTab" title="Import image (Ctrl+I)" aria-label="Import image"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>`;
+  bar.querySelectorAll(".dtab").forEach(el => {
+    el.onclick = e => { const c = e.target.closest("[data-close]"); if (c) { e.stopPropagation(); closeDoc(docs[+c.dataset.close]); } else activate(docs[+el.dataset.i]); };
+    el.onauxclick = e => { if (e.button === 1) closeDoc(docs[+el.dataset.i]); };
+    el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(docs[+el.dataset.i]); } };
+  });
+  $("addTab").onclick = importImages;
+  bar.querySelector(".on")?.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
-// ---------- Logikk ----------
+// ---------- Skjema <-> innstillinger ----------
 const val = n => document.querySelector(`[name=${n}]:checked`)?.value;
-function S() {
+const setRadio = (n, v) => { const el = document.querySelector(`[name=${n}][value="${v}"]`); if (el) el.checked = true; };
+function readForm() {
   const fmt = val("fmt");
-  return { name: $("name").value.trim() || "Navn", out: $("outDir").value.trim(), tx: state.tx, ty: state.ty, fit: val("fit"),
+  return { name: $("name").value.trim(), out: $("outDir").value.trim(), tx: cur.settings.tx, ty: cur.settings.ty, fit: val("fit"),
     scales: [...document.querySelectorAll("#scales input:checked")].map(i => +i.value), fmt, ch: val("ch"),
     depth: fmt === "JPG" ? "8" : (val("depth") || "8"), codec: $("codec").value, comp: +$("comp").value, sep: val("sep"),
     space: $("space").value, convert: $("convert").checked, filter: $("filter").value };
 }
+function writeForm(s) {
+  if (!s) return;
+  $("name").value = s.name || ""; $("outDir").value = s.out || "";
+  ["fit", "fmt", "ch", "sep"].forEach(n => setRadio(n, s[n]));
+  document.querySelectorAll("#scales input").forEach(i => i.checked = s.scales.includes(+i.value));
+  $("codec").value = s.codec; $("comp").value = s.comp; $("space").value = s.space; $("convert").checked = s.convert; $("filter").value = s.filter;
+  $("depthSeg").dataset.key = ""; syncFormat(); setRadio("depth", s.depth);
+}
+const S = () => ({ ...cur.settings, name: cur.settings.name || "Name", doc: cur.id });
+
+// ---------- Logikk ----------
 const udim = (u, v) => 1001 + u + 10 * v;
 const baseTile = (w, h, s) => s.fit === "crop" ? [Math.max(1, Math.floor(w / s.tx)), Math.max(1, Math.floor(h / s.ty))] : [Math.ceil(w / s.tx), Math.ceil(h / s.ty)];
 const tileSize = (w, h, s, d) => baseTile(w, h, s).map(n => Math.max(1, Math.round(n / d)));
@@ -432,16 +539,22 @@ const levelCodecs = ["zip", "zips", "dwaa", "dwab"];
 const compTag = s => s.fmt === "PNG" ? s.comp + "%" : s.fmt === "JPG" ? "q" + Math.max(1, s.comp) : levelCodecs.includes(s.codec) ? `${s.codec}_${s.comp}%` : s.codec;
 const folderName = (s, tw, th) => `${s.name}_${s.fmt}_${s.ch}_${{ "8": "8bit", "16": "16bit", half: "half", float: "float" }[s.depth]}_${compTag(s)}_${tw}_${th}`;
 const fileName = (s, n) => `${s.name}${s.sep}${n}.${s.fmt.toLowerCase()}`;
-const esc = t => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const joinPath = (a, b) => a ? a.replace(/[\\/]+$/, "") + (a.includes("/") && !a.includes("\\") ? "/" : "\\") + b : b;
+function fmtBytes(b) {
+  if (b == null) return "";
+  const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return (i === 0 ? b : b < 10 ? b.toFixed(1) : Math.round(b)) + " " + u[i];
+}
 
-// ---------- Segmenterte kontroller med glidende markør ----------
+// ---------- Segmenterte kontroller ----------
 function placeThumb(seg) {
   const th = seg.querySelector(".thumb"), on = seg.querySelector("input:checked")?.parentElement;
   if (!th || !on) return;
   th.style.width = on.offsetWidth + "px"; th.style.transform = `translateX(${on.offsetLeft - 3}px)`;
 }
 const segs = () => document.querySelectorAll(".seg");
-
 function syncFormat() {
   const fmt = val("fmt"), prev = val("depth");
   const opts = fmt === "PNG" ? [["8", "8-bit"], ["16", "16-bit"]] : fmt === "EXR" ? [["half", "Half · 16"], ["float", "Full · 32"]] : [];
@@ -453,7 +566,7 @@ function syncFormat() {
   ds.hidden = fmt === "JPG";
   $("codecField").hidden = fmt !== "EXR";
   $("cRGBA").disabled = fmt === "JPG";
-  if (fmt === "JPG" && $("cRGBA").checked) document.querySelector("[name=ch][value=RGB]").checked = true;
+  if (fmt === "JPG" && $("cRGBA").checked) setRadio("ch", "RGB");
   $("compLabel").textContent = fmt === "JPG" ? "Quality" : "Compression";
   $("ticks").innerHTML = fmt === "JPG" ? "<span>smaller files</span><span>better quality</span>" : "<span>faster</span><span>smaller files</span>";
   $("comp").disabled = fmt === "EXR" && !levelCodecs.includes($("codec").value);
@@ -467,58 +580,125 @@ function compText(s) {
   return "not used";
 }
 
-// ---------- Oppdatering av panel ----------
+// ---------- Oppdatering ----------
+function onFormChange() {
+  if (!cur) return;
+  cur.settings = readForm(); setDirty(true); update();
+}
 function update() {
-  if (!src) return;
+  if (!cur) return;
   syncFormat();
-  const s = S(), W = src.W, H = src.H, [tw, th] = baseTile(W, H, s);
+  const s = S(), W = cur.W, H = cur.H, [tw, th] = baseTile(W, H, s);
   $("txOut").textContent = s.tx; $("tyOut").textContent = s.ty;
   document.querySelectorAll(".stepper").forEach(st => {
-    const ax = st.dataset.axis, v = state["t" + ax], max = ax === "x" ? 10 : 20;
+    const ax = st.dataset.axis, v = s["t" + ax], max = ax === "x" ? 10 : 20;
     st.querySelector('[data-d="-1"]').disabled = v <= 1; st.querySelector('[data-d="1"]').disabled = v >= max;
   });
   const c = $("comp"); c.style.setProperty("--p", c.value + "%");
   $("compOut").textContent = compText(s);
-  document.querySelectorAll("#scales .chip").forEach(ch => {
-    const d = +ch.querySelector("input").value, [a, b] = tileSize(W, H, s, d);
-    ch.querySelector("span").textContent = `${a}×${b}`;
-  });
+  document.querySelectorAll("#scales .chip").forEach(ch => { const [a, b] = tileSize(W, H, s, +ch.querySelector("input").value); ch.querySelector("span").textContent = `${a}×${b}`; });
   $("hTile").textContent = `${tw}×${th}`;
   const cw = tw * s.tx, chh = th * s.ty, hf = $("hFit");
   if (s.fit === "pad") { const d = cw - W || chh - H; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `padding <b>+${cw - W} × +${chh - H} px</b>` : `divides evenly <b>✓</b>`; }
   else if (s.fit === "crop") { const d = W - cw || H - chh; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `cropped <b>−${W - cw} × −${H - chh} px</b>` : `divides evenly <b>✓</b>`; }
   else { hf.className = "pill"; hf.innerHTML = `stretched to <b>${cw}×${chh}</b>`; }
-  if (!s.scales.length) $("path").textContent = "Pick at least one resolution";
-  else {
-    let o = `${esc(s.out || "(no folder chosen)")}\\\n`;
-    s.scales.forEach(d => { const [a, b] = tileSize(W, H, s, d); o += `  <span class="f">${esc(folderName(s, a, b))}</span>\\\n`; });
-    o += `    <span class="n">${esc(fileName(s, 1001))}</span> … <span class="n">${esc(fileName(s, udim(s.tx - 1, s.ty - 1)))}</span>`;
-    $("path").innerHTML = o;
-  }
   const n = s.tx * s.ty * s.scales.length;
   $("sumL").textContent = `${n} file${n === 1 ? "" : "s"} · ${s.scales.length} folder${s.scales.length === 1 ? "" : "s"}`;
   $("sumR").textContent = `${s.fmt} · ${s.ch} · ${s.fmt === "JPG" ? "8-bit" : { "8": "8-bit", "16": "16-bit", half: "half", float: "full" }[s.depth]}`;
-  if (!busy) $("exportBtn").disabled = !s.scales.length || !s.out || (APP && !realLoaded);
-  $("exportLbl").textContent = busy ? $("exportLbl").textContent : (!s.out ? "Choose an output folder" : "Export");
+  if (!busy) {
+    $("exportBtn").disabled = !s.scales.length || !s.out;
+    $("exportLbl").textContent = !s.out ? "Choose an output folder" : !s.scales.length ? "Pick a resolution" : "Export";
+  }
   $("confirm").hidden = true;
   segs().forEach(placeThumb);
-  kick();
+  requestEstimate(); renderList(); kick();
 }
+
+// ---------- Estimert størrelse ----------
+const estKey = s => JSON.stringify([s.doc, s.tx, s.ty, s.fit, s.scales, s.fmt, s.ch, s.depth, s.codec, s.comp, s.space, s.convert, s.filter]);
+let estTimer = 0;
+function requestEstimate() {
+  const s = S(), key = estKey(s), d = cur;
+  if (d.est?.key === key) return;
+  if (d.actual && d.actual.key !== key) d.actual = null;
+  d.est = { key, sizes: null };
+  clearTimeout(estTimer);
+  estTimer = setTimeout(async () => {
+    let sizes;
+    if (APP && !d.id.startsWith("local")) { const r = await api().estimate(s); if (!r || !r.ok) return; sizes = r.sizes; }
+    else sizes = roughSizes(s, d);
+    if (d.est?.key !== key) return;
+    d.est.sizes = sizes; if (d === cur) renderList();
+  }, APP ? 350 : 120);
+}
+function roughSizes(s, d) { // nettleser: grovt anslag uten koding
+  const ch = { BW: 1, RGB: 3, RGBA: 4 }[s.ch], bpc = { "8": 1, "16": 2, half: 2, float: 4 }[s.depth] || 1;
+  const exr = { none: 1, rle: .85, zip: .55, zips: .6, piz: .5, pxr24: .45, b44: .55, b44a: .5, dwaa: .18, dwab: .16 };
+  const ratio = s.fmt === "PNG" ? .62 - s.comp * .0012 : s.fmt === "JPG" ? (.04 + s.comp / 100 * .3) / bpc : exr[s.codec];
+  const out = {};
+  for (const dv of s.scales) { const [a, b] = tileSize(d.W, d.H, s, dv); out[dv] = Array(s.tx * s.ty).fill(Math.round(a * b * ch * bpc * ratio)); }
+  return out;
+}
+
+// ---------- Utdataliste (venstre) ----------
+const openFolds = new Set(["1"]);
+let hoverTile = null;
+function renderList() {
+  if (!cur) return;
+  const s = S(), est = cur.est?.sizes, act = cur.actual?.key === estKey(s) ? cur.actual : null;
+  let total = 0, known = true, nFiles = 0;
+  const html = s.scales.map(dv => {
+    const [a, b] = tileSize(cur.W, cur.H, s, dv), folder = folderName(s, a, b), dkey = String(dv);
+    const realFolder = act?.folders[folder];
+    let sum = 0;
+    const rows = [];
+    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) {
+      const f = fileName(s, udim(u, v)), real = realFolder?.[f], e = est?.[dkey]?.[v * s.tx + u];
+      const bytes = real ?? e; if (bytes == null) known = false; else sum += bytes;
+      nFiles++;
+      rows.push(`<div class="frow" data-u="${u}" data-v="${v}"><span class="u">${udim(u, v)}</span><span class="fn" title="${esc(f)}">${esc(f)}</span><span class="sz${real != null ? " real" : ""}">${bytes == null ? '<i class="est"></i>' : (real != null ? "" : "≈ ") + fmtBytes(bytes)}</span></div>`);
+    }
+    total += sum;
+    const label = dv === 1 ? "1:1" : "1/" + dv;
+    return `<div class="fold${openFolds.has(dkey) ? " open" : ""}" data-k="${dkey}">
+      <div class="fold-h" role="button" tabindex="0" aria-expanded="${openFolds.has(dkey)}">
+        <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        <div><div class="fold-name">${esc(folder)}</div>
+          <div class="fold-meta"><span class="tag">${label} · ${a}×${b}</span><span class="tag">${s.tx * s.ty} files</span><span class="tag size">${known || sum ? (realFolder ? "" : "≈ ") + fmtBytes(sum) : "estimating…"}</span>${realFolder ? '<span class="tag done">✓ exported</span>' : ""}</div></div>
+        ${realFolder ? `<button type="button" class="fold-open" data-open="${esc(act.paths[folder])}" title="Open folder" aria-label="Open folder"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M1.5 4.5a1 1 0 0 1 1-1h3.6l1.6 1.6h5.8a1 1 0 0 1 1 1v6.4a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1z"/></svg></button>` : "<span></span>"}
+      </div>
+      <div class="files">${rows.join("")}</div></div>`;
+  }).join("");
+  $("outList").innerHTML = html || `<div class="out-note">Pick at least one resolution to see the files.</div>`;
+  $("outTotal").innerHTML = s.scales.length ? `${known ? (act ? "" : "≈ ") + fmtBytes(total) : "…"}<small>${nFiles} files</small>` : "–";
+  const root = $("outRoot"); root.textContent = s.out || "Choose an output folder in the panel on the right"; root.classList.toggle("none", !s.out);
+  $("estNote").textContent = act ? "Sizes are from the last export." : APP ? "Sizes are estimated by encoding a sample of each tile." : "Rough estimate in the browser preview.";
+}
+$("outList").addEventListener("click", e => {
+  const o = e.target.closest("[data-open]"); if (o) { e.stopPropagation(); if (APP) api().open_folder(o.dataset.open); return; }
+  const h = e.target.closest(".fold-h"); if (!h) return;
+  const f = h.parentElement, k = f.dataset.k;
+  openFolds.has(k) ? openFolds.delete(k) : openFolds.add(k);
+  f.classList.toggle("open"); h.setAttribute("aria-expanded", f.classList.contains("open"));
+});
+$("outList").addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("fold-h")) { e.preventDefault(); e.target.click(); } });
+$("outList").addEventListener("pointerover", e => { const r = e.target.closest(".frow"); const t = r ? { u: +r.dataset.u, v: +r.dataset.v } : null; if (JSON.stringify(t) !== JSON.stringify(hoverTile)) { hoverTile = t; kick(); } });
+$("outList").addEventListener("pointerleave", () => { hoverTile = null; kick(); });
 
 // ---------- Visning (animert) ----------
 let raf = 0;
 const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
 function target() {
-  const s = S(), W = src.W, H = src.H, [tw, th] = baseTile(W, H, s);
+  const s = S(), W = cur.W, H = cur.H, [tw, th] = baseTile(W, H, s);
   const cw = tw * s.tx, ch = th * s.ty;
   const ew = s.fit === "stretch" ? cw : Math.max(W, cw), eh = s.fit === "stretch" ? ch : Math.max(H, ch);
-  const r = cv.getBoundingClientRect(), padT = 58, padB = 92, padX = 36;
+  const r = cv.getBoundingClientRect(), padT = 58, padB = 92, padX = 30;
   const k = Math.max(1e-4, Math.min((r.width - 2 * padX) / ew, (r.height - padT - padB) / eh));
   return { s, W, H, cw, ch, ew, eh, k, ox: (r.width - ew * k) / 2, oy: padT + (r.height - padT - padB - eh * k) / 2, r };
 }
 function frame() {
   raf = 0;
-  if (!src || $("app").hidden) return;
+  if (!cur || $("app").hidden) return;
   const T = target(), s = T.s, a = reduce ? 1 : .2;
   if (!anim.k) Object.assign(anim, { k: T.k, ox: T.ox, oy: T.oy, tx: s.tx, ty: s.ty });
   let moving = false;
@@ -530,7 +710,7 @@ function frame() {
   if (moving) kick();
 }
 function draw(T) {
-  const { s, W, H, cw, ch, eh, r } = T, { k, ox, oy } = anim;
+  const { s, W, H, cw, ch, eh, r } = T, { k, ox, oy } = anim, proxy = cur.proxy;
   const dpr = devicePixelRatio || 1;
   if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -555,6 +735,11 @@ function draw(T) {
   }
   const gx = C.w / anim.tx, gy = C.h / anim.ty;
   ctx.save(); ctx.beginPath(); ctx.rect(C.x - 1, C.y - 1, C.w + 2, C.h + 2); ctx.clip();
+  if (hoverTile && hoverTile.u < s.tx && hoverTile.v < s.ty) {
+    const hx = C.x + hoverTile.u * gx, hy = C.y + C.h - (hoverTile.v + 1) * gy;
+    ctx.fillStyle = "rgba(61,108,240,.28)"; ctx.fillRect(hx, hy, gx, gy);
+    ctx.strokeStyle = acc; ctx.lineWidth = 3; ctx.strokeRect(hx + 1.5, hy + 1.5, gx - 3, gy - 3);
+  }
   const lines = () => { ctx.beginPath();
     for (let i = 1; i < anim.tx; i++) { const x = Math.round(C.x + i * gx) + .5; ctx.moveTo(x, C.y); ctx.lineTo(x, C.y + C.h); }
     for (let j = 1; j < anim.ty; j++) { const y = Math.round(C.y + C.h - j * gy) + .5; ctx.moveTo(C.x, y); ctx.lineTo(C.x + C.w, y); }
@@ -568,21 +753,23 @@ function draw(T) {
     const fade = Math.min(1, anim.tx - u, anim.ty - v); if (fade <= .05) continue;
     const t = String(udim(u, v)), tw = ctx.measureText(t).width;
     const x = C.x + u * gx + 7, y = C.y + C.h - (v + 1) * gy + 7;
+    const hl = hoverTile && hoverTile.u === u && hoverTile.v === v;
     ctx.globalAlpha = fade;
-    ctx.fillStyle = "rgba(10,12,18,.72)"; ctx.beginPath(); ctx.roundRect(x, y, tw + 12, fs + 10, 6); ctx.fill();
-    ctx.fillStyle = u === 0 && v === 0 ? acc : "#fff"; ctx.fillText(t, x + 6, y + (fs + 10) / 2 + .5);
+    ctx.fillStyle = hl ? acc : "rgba(10,12,18,.72)"; ctx.beginPath(); ctx.roundRect(x, y, tw + 12, fs + 10, 6); ctx.fill();
+    ctx.fillStyle = hl ? "#fff" : u === 0 && v === 0 ? "#9db6ff" : "#fff"; ctx.fillText(t, x + 6, y + (fs + 10) / 2 + .5);
   }
   ctx.globalAlpha = 1; ctx.restore();
 }
 
-// ---------- X/Y: knapper, hjul, dra, rutevelger, piltaster ----------
+// ---------- X/Y ----------
 function setDims(tx, ty) {
+  if (!cur) return;
   tx = Math.max(1, Math.min(10, tx)); ty = Math.max(1, Math.min(20, ty));
-  if (tx === state.tx && ty === state.ty) return;
-  state.tx = tx; state.ty = ty; update();
+  if (tx === cur.settings.tx && ty === cur.settings.ty) return;
+  cur.settings.tx = tx; cur.settings.ty = ty; setDirty(true); update();
 }
 document.querySelectorAll(".stepper").forEach(st => {
-  const ax = st.dataset.axis, bump = d => ax === "x" ? setDims(state.tx + d, state.ty) : setDims(state.tx, state.ty + d);
+  const ax = st.dataset.axis, bump = d => ax === "x" ? setDims(cur.settings.tx + d, cur.settings.ty) : setDims(cur.settings.tx, cur.settings.ty + d);
   st.querySelectorAll("button").forEach(b => b.onclick = () => bump(+b.dataset.d));
   st.addEventListener("wheel", e => { e.preventDefault(); bump(e.deltaY < 0 ? 1 : -1); }, { passive: false });
   const out = st.querySelector("output");
@@ -593,150 +780,195 @@ document.querySelectorAll(".stepper").forEach(st => {
     out.addEventListener("pointermove", mv); out.addEventListener("pointerup", up);
   });
 });
-const PR = 8, grid = $("pickerGrid");
-for (let r = PR - 1; r >= 0; r--) for (let c = 0; c < 10; c++) { const i = document.createElement("i"); i.dataset.u = c; i.dataset.v = r; grid.append(i); }
+const grid = $("pickerGrid");
+for (let r = 7; r >= 0; r--) for (let c = 0; c < 10; c++) { const i = document.createElement("i"); i.dataset.u = c; i.dataset.v = r; grid.append(i); }
 function paintPicker(tx, ty) {
   grid.querySelectorAll("i").forEach(i => i.classList.toggle("on", +i.dataset.u < tx && +i.dataset.v < ty));
   $("pickerCap").innerHTML = `<b>${tx} × ${ty}</b> · 1001–${udim(tx - 1, ty - 1)}`;
 }
 grid.addEventListener("pointerover", e => { const i = e.target.closest("i"); if (i) paintPicker(+i.dataset.u + 1, +i.dataset.v + 1); });
-grid.addEventListener("pointerleave", () => paintPicker(state.tx, state.ty));
+grid.addEventListener("pointerleave", () => paintPicker(cur.settings.tx, cur.settings.ty));
 grid.addEventListener("click", e => { const i = e.target.closest("i"); if (i) { setDims(+i.dataset.u + 1, +i.dataset.v + 1); togglePicker(false); } });
-function togglePicker(open) { $("picker").classList.toggle("open", open); $("gridBtn").setAttribute("aria-expanded", open); if (open) paintPicker(state.tx, state.ty); }
+function togglePicker(open) { $("picker").classList.toggle("open", open); $("gridBtn").setAttribute("aria-expanded", open); if (open) paintPicker(cur.settings.tx, cur.settings.ty); }
 $("gridBtn").onclick = e => { e.stopPropagation(); togglePicker(!$("picker").classList.contains("open")); };
-document.addEventListener("click", e => { if (!e.target.closest("#picker")) togglePicker(false); });
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { togglePicker(false); closeSheet(); }
-  if (e.target.closest("input, select, textarea")) return;
-  const m = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
-  if (m) { e.preventDefault(); setDims(state.tx + m[0], state.ty + m[1]); }
-});
 
-// ---------- Eksport (simulert) ----------
-let busy = false, lastResult = null;
-function planned(s) {
+// ---------- Eksport ----------
+let busy = false;
+function planned(s, d) {
   const out = [];
-  for (const d of s.scales) { const [tw, th] = tileSize(src.W, src.H, s, d), folder = folderName(s, tw, th);
-    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) out.push({ d, tw, th, folder, u, v, file: fileName(s, udim(u, v)) }); }
+  for (const dv of s.scales) { const [tw, th] = tileSize(d.W, d.H, s, dv), folder = folderName(s, tw, th);
+    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) out.push({ folder, file: fileName(s, udim(u, v)) }); }
   return out;
 }
 $("form").addEventListener("submit", async e => {
-  e.preventDefault(); if (busy) return;
-  const s = S(), files = planned(s);
-  const clash = APP ? await api().count_existing(s) : files.filter(f => exported.has(f.folder + "/" + f.file)).length;
+  e.preventDefault(); if (busy || !cur) return;
+  const s = S(), files = planned(s, cur);
+  const clash = APP && !cur.id.startsWith("local") ? await api().count_existing(s) : files.filter(f => cur.exported.has(f.folder + "/" + f.file)).length;
   if (clash) { $("confirmText").textContent = `${clash} file${clash === 1 ? "" : "s"} already exist`; $("confirm").hidden = false; return; }
   run(s, files);
 });
 $("cNo").onclick = () => $("confirm").hidden = true;
-$("cYes").onclick = () => { $("confirm").hidden = true; const s = S(); run(s, planned(s)); };
+$("cYes").onclick = () => { $("confirm").hidden = true; const s = S(); run(s, planned(s, cur)); };
+window.onExportProgress = (d, t) => { $("fill").style.width = d / t * 100 + "%"; $("exportLbl").textContent = `Exporting ${d} of ${t}`; };
 async function run(s, files) {
-  busy = true; $("exportBtn").disabled = true;
-  if (APP) {
-    $("exportLbl").textContent = `Exporting 0 of ${files.length}`;
+  const d = cur;
+  busy = true; $("exportBtn").disabled = true; $("exportLbl").textContent = `Exporting 0 of ${files.length}`;
+  let result;
+  if (APP && !d.id.startsWith("local")) {
     const res = await api().export(s);
-    busy = false; $("exportLbl").textContent = "Eksporter"; $("fill").style.width = "0"; update();
-    if (!res.ok) return toast(res.error);
-    lastResult = { s, files, folders: res.folders }; return openSheet(0);
+    if (!res.ok) { busy = false; $("fill").style.width = "0"; update(); return toast(res.error); }
+    const folders = {}, paths = {};
+    for (const p of res.folders) { const name = p.split(/[\\/]/).pop(); folders[name] = res.sizes[p]; paths[name] = p; }
+    result = { folders, paths };
+  } else {
+    await new Promise(done => { const t0 = performance.now(), dur = Math.min(1600, 300 + files.length * 40);
+      const tick = now => { const p = Math.min(1, (now - t0) / dur); window.onExportProgress(Math.max(1, Math.ceil(p * files.length)), files.length); p < 1 ? requestAnimationFrame(tick) : done(); };
+      requestAnimationFrame(tick); });
+    const est = d.est?.sizes || roughSizes(s, d), folders = {}, paths = {};
+    for (const dv of s.scales) { const [a, b] = tileSize(d.W, d.H, s, dv), name = folderName(s, a, b); folders[name] = {}; paths[name] = joinPath(s.out, name);
+      for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) folders[name][fileName(s, udim(u, v))] = est[dv][v * s.tx + u]; }
+    result = { folders, paths };
   }
-  const t0 = performance.now(), dur = Math.min(1600, 300 + files.length * 40);
-  const tick = now => {
-    const p = Math.min(1, (now - t0) / dur), i = Math.max(1, Math.ceil(p * files.length));
-    $("fill").style.width = p * 100 + "%"; $("exportLbl").textContent = `Exporting ${i} of ${files.length}`;
-    if (p < 1) requestAnimationFrame(tick); else finish(s, files);
-  };
-  requestAnimationFrame(tick);
+  files.forEach(f => d.exported.add(f.folder + "/" + f.file));
+  d.actual = { key: estKey(s), ...result };
+  s.scales.forEach(dv => openFolds.add(String(dv)));
+  busy = false; $("fill").style.width = "0"; update();
+  toast(`Exported ${files.length} files${APP ? "" : " (simulated)"}`, true);
 }
-function finish(s, files) {
-  files.forEach(f => exported.add(f.folder + "/" + f.file));
-  busy = false; $("exportLbl").textContent = "Eksporter"; $("fill").style.width = "0"; update();
-  lastResult = { s, files }; openSheet(0);
-}
-function openSheet(idx) {
-  const { s, files } = lastResult, folders = [...new Set(files.map(f => f.folder))];
-  $("sheetTitle").textContent = `${files.length} files exported`;
-  $("tabs").innerHTML = folders.map((f, i) => { const x = files.find(q => q.folder === f); return `<button type="button" class="tab" role="tab" aria-selected="${i === idx}" data-i="${i}">${x.d === 1 ? "1:1" : "1/" + x.d} · ${x.tw}×${x.th}</button>`; }).join("");
-  $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => openSheet(+b.dataset.i));
-  const folder = folders[idx], list = files.filter(f => f.folder === folder);
-  const W = src.W, H = src.H, [btw, bth] = baseTile(W, H, s);
-  const full = document.createElement("canvas"), sc = Math.min(1, 2400 / Math.max(btw * s.tx, bth * s.ty));
-  full.width = Math.round(btw * s.tx * sc); full.height = Math.round(bth * s.ty * sc);
-  const g = full.getContext("2d");
-  if (s.fit === "stretch") g.drawImage(src, 0, 0, full.width, full.height); else g.drawImage(src, 0, full.height - H * sc, W * sc, H * sc);
-  const body = $("sheetBody");
-  const realFolder = (lastResult.folders || []).find(p => p.endsWith(folder));
-  body.innerHTML = `<div class="folder-path">${esc(s.out)}\\<b>${esc(folder)}</b>\\</div>${realFolder ? `<button type="button" class="openf" id="openF">Open folder</button><div style="height:12px"></div>` : ""}<div class="tiles" style="grid-template-columns:repeat(${s.tx},minmax(0,1fr))"></div><p class="sheet-note">${APP ? "" : "Simulated export. "}Tiles are laid out like the UDIM grid, with 1001 at the bottom left.</p>`;
-  const host = body.querySelector(".tiles"), tW = btw * sc, tH = bth * sc;
-  list.sort((a, b) => b.v - a.v || a.u - b.u).forEach(f => {
-    const el = document.createElement("div"); el.className = "tile";
-    const c = document.createElement("canvas"), kk = 220 / Math.max(tW, tH);
-    c.width = Math.max(1, Math.round(tW * kk)); c.height = Math.max(1, Math.round(tH * kk));
-    const cg = c.getContext("2d"); cg.drawImage(full, f.u * tW, full.height - (f.v + 1) * tH, tW, tH, 0, 0, c.width, c.height);
-    if (s.ch === "BW") { const id = cg.getImageData(0, 0, c.width, c.height), p = id.data; for (let q = 0; q < p.length; q += 4) p[q] = p[q + 1] = p[q + 2] = .2126 * p[q] + .7152 * p[q + 1] + .0722 * p[q + 2]; cg.putImageData(id, 0, 0); }
-    const lab = document.createElement("span"); lab.innerHTML = `<b>${udim(f.u, f.v)}</b> ${esc(f.file)}`; lab.title = f.file;
-    el.append(c, lab); host.append(el);
-  });
-  if (realFolder) $("openF").onclick = () => api().open_folder(realFolder);
-  $("sheet").classList.add("open"); $("sheetBg").classList.add("open");
-}
-function closeSheet() { $("sheet").classList.remove("open"); $("sheetBg").classList.remove("open"); }
-$("sheetX").onclick = closeSheet; $("sheetBg").onclick = closeSheet;
 
 // ---------- Innlasting ----------
 function loadNative(r) {
-  if (!r) return;
-  if (!r.ok) return startError(r.error);
-  const img = new Image();
-  img.onload = () => { realLoaded = true; setSource(img, r.name, r.label, r.width, r.height); };
-  img.src = r.preview;
+  if (!r) return Promise.resolve(null);
+  if (!r.ok) { startError(r.error); return Promise.resolve(null); }
+  return new Promise(res => { const img = new Image();
+    img.onload = () => res(addDoc(img, r)); img.onerror = () => { startError(`Could not show ${r.label}`); res(null); };
+    img.src = r.preview; });
 }
-window.onNativeImage = loadNative;
-window.onExportProgress = (d, t, m) => { $("fill").style.width = d / t * 100 + "%"; $("exportLbl").textContent = `Exporting ${d} of ${t}`; };
 function loadFile(file) {
-  if (!file || !file.type.startsWith("image/")) { startError("The browser preview can only open PNG, JPG and WebP. The installed app opens all formats."); return; }
-  const img = new Image();
-  img.onload = () => setSource(img, file.name.replace(/\.[^.]+$/, ""), file.name);
-  img.onerror = () => startError("Could not read that image.");
-  img.src = URL.createObjectURL(file);
+  if (!file || !/^image\/(png|jpeg|webp|gif|bmp)$/.test(file.type)) { startError("The browser preview can only open PNG, JPG and WebP. The installed app opens all formats."); return Promise.resolve(null); }
+  return new Promise(res => { const img = new Image();
+    img.onload = () => res(addDoc(img, { label: file.name, name: file.name.replace(/\.[^.]+$/, "") }));
+    img.onerror = () => { startError("Could not read that image."); res(null); };
+    img.src = URL.createObjectURL(file); });
 }
-$("srcBtn").onclick = () => importImage();
-$("file").onchange = e => loadFile(e.target.files[0]);
+async function importImages() {
+  closeMenu();
+  if (APP) {
+    const list = await api().open_images(); let last = null;
+    for (const r of list || []) last = (await loadNative(r)) || last;
+    if (last) activate(last);
+  } else $("file").click();
+}
+$("file").onchange = async e => { let last = null; for (const f of e.target.files) last = (await loadFile(f)) || last; e.target.value = ""; if (last) activate(last); };
+window.onNativeDrop = async paths => {
+  let last = null;
+  for (const p of paths) {
+    if (/\.udimt$/i.test(p)) { await openProject(p); continue; }
+    last = (await loadNative(await api().load_path(p))) || last;
+  }
+  if (last) activate(last);
+};
+for (const el of [$("view"), $("startDrop")]) {
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("over"); });
+  el.addEventListener("dragleave", () => el.classList.remove("over"));
+  el.addEventListener("drop", async e => { e.preventDefault(); el.classList.remove("over");
+    if (APP) return; let last = null; for (const f of e.dataTransfer.files) last = (await loadFile(f)) || last; if (last) activate(last); });
+}
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => e.preventDefault());
+$("importBtn").onclick = importImages;
+
+// ---------- Prosjekt ----------
+function projectData() {
+  return { active: Math.max(0, docs.indexOf(cur)), tabs: docs.filter(d => d.path).map(d => ({ image: d.path, settings: d.settings })) };
+}
+async function saveProject(asNew) {
+  closeMenu();
+  if (!APP) return toast("Projects can be saved in the installed app.");
+  if (!docs.length) return;
+  const r = await api().save_project(projectData(), project.path, !!asNew);
+  if (!r) return;
+  if (!r.ok) return toast(r.error);
+  project.path = r.path; project.label = r.label; setDirty(false); toast(`Saved ${r.label}`, true);
+}
+async function openProject(path) {
+  closeMenu();
+  if (!APP) return toast("Projects can be opened in the installed app.");
+  if (project.dirty && docs.length && !(await ask("Discard unsaved changes?", "The open tabs have changes that are not saved in a project.", "Discard and open"))) return;
+  path = path || await api().choose_project();
+  if (!path) return;
+  const r = await api().open_project(path);
+  if (!r.ok) return startError(r.error);
+  for (const d of [...docs]) { docs.splice(docs.indexOf(d), 1); if (!d.id.startsWith("local")) api().close_doc(d.id); }
+  const loaded = [];
+  for (const t of r.tabs) { const d = await loadNative({ ...t.image, settings: t.settings }); if (d) loaded.push(d); }
+  project.path = r.path; project.label = r.label; setDirty(false);
+  if (r.missing.length) await ask("Some images were not found", r.missing.join("\n"), "OK", true);
+  if (loaded.length) activate(loaded[Math.min(r.active, loaded.length - 1)]);
+  else { cur = null; $("app").hidden = true; $("start").hidden = false; renderTabs(); }
+}
+const closeMenu = () => { $("menu").hidden = true; $("projBtn").setAttribute("aria-expanded", "false"); };
+$("projBtn").onclick = e => { e.stopPropagation(); const m = $("menu"); m.hidden = !m.hidden; $("projBtn").setAttribute("aria-expanded", String(!m.hidden)); };
+$("mImport").onclick = importImages;
+$("mOpen").onclick = () => openProject();
+$("mSave").onclick = () => saveProject(false);
+$("mSaveAs").onclick = () => saveProject(true);
+$("openProjBtn").onclick = () => openProject();
+
+// ---------- Små hjelpere ----------
+let toastT;
+function toast(msg, ok) { const t = $("toast"); t.textContent = msg; t.classList.toggle("ok", !!ok); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 4000); }
+function startError(msg) { if ($("app").hidden) $("startErr").textContent = msg; else toast(msg); }
+function ask(title, text, okLabel, single) {
+  return new Promise(res => {
+    $("mTitle").textContent = title; $("mText").textContent = text; $("mOk").textContent = okLabel; $("mCancel").hidden = !!single;
+    $("modal").hidden = false; $("mOk").focus();
+    $("mOk").onclick = () => { $("modal").hidden = true; res(true); };
+    $("mCancel").onclick = () => { $("modal").hidden = true; res(false); };
+  });
+}
+
+// ---------- Globale hendelser ----------
+$("form").addEventListener("input", onFormChange);
+$("form").addEventListener("change", onFormChange);
+$("outDir").addEventListener("change", () => lsSet("outDir", $("outDir").value.trim()));
 $("pickDir").onclick = async () => {
   if (!APP) { $("outDir").focus(); $("outDir").select(); return; }
   const d = await api().choose_folder($("outDir").value);
-  if (d) { $("outDir").value = d; try { localStorage.setItem("outDir", d); } catch {} update(); }
+  if (d) { $("outDir").value = d; lsSet("outDir", d); onFormChange(); }
 };
-const view = $("view");
-view.addEventListener("dragover", e => { e.preventDefault(); view.classList.add("over"); });
-view.addEventListener("dragleave", () => view.classList.remove("over"));
-view.addEventListener("drop", e => { e.preventDefault(); view.classList.remove("over"); if (!APP) loadFile(e.dataTransfer.files[0]); });
-document.addEventListener("dragover", e => e.preventDefault());
-document.addEventListener("drop", e => e.preventDefault());
-
-$("form").addEventListener("input", update);
-$("form").addEventListener("change", update);
+document.addEventListener("click", e => {
+  if (!e.target.closest("#picker")) togglePicker(false);
+  if (!e.target.closest(".menu-wrap")) closeMenu();
+  if (!e.target.closest("#updWrap") && !$("updGo").disabled) $("updPop").hidden = true;
+});
+document.addEventListener("keydown", e => {
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === "s") { e.preventDefault(); saveProject(e.shiftKey); return; }
+  if (mod && k === "o") { e.preventDefault(); openProject(); return; }
+  if (mod && k === "i") { e.preventDefault(); importImages(); return; }
+  if (mod && k === "w" && cur) { e.preventDefault(); closeDoc(cur); return; }
+  if (e.key === "Escape") { togglePicker(false); closeMenu(); $("updPop").hidden = true; }
+  if (!cur || e.target.closest("input, select, textarea, [role=tab]") || !$("modal").hidden) return;
+  const m = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+  if (m) { e.preventDefault(); setDims(cur.settings.tx + m[0], cur.settings.ty + m[1]); }
+});
 new ResizeObserver(() => { segs().forEach(placeThumb); kick(); }).observe(document.body);
-matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", kick);
-new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 document.fonts?.ready.then(() => { segs().forEach(placeThumb); kick(); });
 
 // ---------- App-modus (pywebview) ----------
-let APP = false, realLoaded = false;
-const api = () => window.pywebview.api;
-let toastT;
-function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 6000); }
-function initApp() {
+async function initApp() {
   if (APP || !window.pywebview?.api?.info) return;
   APP = true;
   $("protoNote").hidden = true;
-  try { const d = localStorage.getItem("outDir"); if (d) { $("outDir").value = d; } } catch {}
-  $("outDir").addEventListener("change", () => { try { localStorage.setItem("outDir", $("outDir").value); } catch {} });
   api().info().then(i => { $("verLbl").textContent = i.version === "dev" ? "dev" : "v" + i.version; });
-  update();
+  const files = await api().startup_files();
+  if (files?.length) window.onNativeDrop(files);
   setTimeout(() => checkUpdate(true), 1500);
 }
 window.addEventListener("pywebviewready", initApp);
 
-// ---------- Oppdatering ----------
+// ---------- Oppdatering av appen ----------
 let updInfo = null;
 async function checkUpdate(quiet) {
   const b = $("updBtn");
@@ -759,8 +991,6 @@ function showUpd(r) {
   $("updPop").hidden = false;
 }
 $("updBtn").onclick = e => { e.stopPropagation(); if (!$("updPop").hidden) { $("updPop").hidden = true; return; } showUpd({ state: "", message: "Checking GitHub…" }); checkUpdate(false); };
-$("updPop").onclick = e => e.stopPropagation();
-document.addEventListener("click", () => { if (!$("updGo").disabled) $("updPop").hidden = true; });
 window.onUpdateProgress = p => { $("updFill").style.width = p * 100 + "%"; $("updGoLbl").textContent = `Downloading ${Math.round(p * 100)}%`; };
 $("updGo").onclick = async () => {
   $("updGo").disabled = true; $("updGoLbl").textContent = "Downloading…";
@@ -769,12 +999,6 @@ $("updGo").onclick = async () => {
   else { $("updGo").disabled = false; $("updGoLbl").textContent = "Try again"; $("updMsg").textContent = r.error; }
 };
 
-function startError(msg) { if ($("app").hidden) $("startErr").textContent = msg; else toast(msg); }
-const importImage = async () => APP ? loadNative(await api().open_image()) : $("file").click();
-$("importBtn").onclick = importImage;
-const sd = $("startDrop");
-sd.addEventListener("dragover", e => { e.preventDefault(); sd.classList.add("over"); });
-sd.addEventListener("dragleave", () => sd.classList.remove("over"));
-sd.addEventListener("drop", e => { e.preventDefault(); sd.classList.remove("over"); if (!APP) loadFile(e.dataTransfer.files[0]); });
+renderProject();
 if (window.pywebview?.api?.info) initApp();
 </script>
