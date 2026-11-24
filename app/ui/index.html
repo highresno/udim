@@ -252,6 +252,22 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .modal button { border: 0; border-radius: 10px; padding: 9px 14px; font-weight: 600; background: var(--raised); }
 .modal button.yes { background: var(--accent); color: var(--accent-fg); }
 .toast.ok { border-color: var(--ok); }
+.spin-ring { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent-soft); border-top-color: var(--accent); animation: spin .8s linear infinite; flex: none; }
+.dtab.loading { background: var(--surface); border-color: var(--line); color: var(--fg); cursor: progress; }
+.dtab.loading .ring-box { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; flex: none; }
+.loadbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 80; overflow: hidden; background: var(--accent-soft); }
+.loadbar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 35%; background: var(--accent); border-radius: 2px; animation: indet 1.2s ease-in-out infinite; }
+@keyframes indet { from { left: -35%; } to { left: 100%; } }
+.drop .loading-state { display: grid; justify-items: center; gap: 10px; }
+.drop .loading-state .spin-ring { width: 44px; height: 44px; border-width: 4px; }
+.drop .loading-state b { font-size: 16px; }
+.drop .loading-state span { font: 12px var(--mono); color: var(--muted); }
+.drop.is-loading > :not(.loading-state) { display: none; }
+.src-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 10px; border-radius: 10px; background: var(--raised); margin-bottom: 4px; }
+.src-card img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
+.src-card b { font-size: 12.5px; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-card span { font: 11px var(--mono); color: var(--muted); }
+.src-card .sz { color: var(--fg); font-weight: 500; }
 .import.secondary { background: transparent; color: var(--accent); padding: 6px 12px; font-size: 13px; }
 .import.secondary:hover { background: var(--accent-soft); filter: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
@@ -270,6 +286,7 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
     <button type="button" class="import secondary" id="openProjBtn">Open project…</button>
     <span class="formats" id="formats">EXR · TIFF · PNG · JPG · PSD · TGA · HDR</span>
     <span class="err" id="startErr"></span>
+    <div class="loading-state" id="startLoading" hidden><i class="spin-ring"></i><b id="startLoadingName">Loading…</b><span id="startLoadingTime"></span></div>
   </div>
 </div>
 
@@ -306,6 +323,7 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 
   <aside class="out" aria-label="Output files">
     <div class="out-head">
+      <div class="src-card" id="srcCard" title=""><img id="srcCardImg" alt=""><div><b id="srcCardName"></b><span id="srcCardMeta"></span></div></div>
       <h3>Output</h3>
       <div class="out-total" id="outTotal">–</div>
       <div class="out-root" id="outRoot"></div>
@@ -439,6 +457,7 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 
 <input type="file" id="file" accept="image/*" multiple hidden>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="loadbar" id="loadbar" hidden></div>
 <div class="modal-bg" id="modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <h2 id="mTitle"></h2><p id="mText"></p>
@@ -473,6 +492,7 @@ function addDoc(img, info) {
   const tc = document.createElement("canvas"); tc.width = tc.height = 56; const m = Math.min(img.naturalWidth, img.naturalHeight);
   tc.getContext("2d").drawImage(img, (img.naturalWidth - m) / 2, (img.naturalHeight - m) / 2, m, m, 0, 0, 56, 56);
   const d = { id: info.doc || "local" + (++localIds), label: info.label, path: info.path || null, W, H, img, proxy, thumb: tc.toDataURL(),
+    fileSize: info.fileSize || 0, pixelFormat: info.pixelFormat || "", channels: info.channels || 0,
     settings: { ...DEFAULTS, name: info.name, out: lsGet("outDir") || "", ...(info.settings || {}) }, est: null, actual: null, exported: new Set() };
   docs.push(d); setDirty(true);
   return d;
@@ -499,8 +519,9 @@ function renderProject() {
 function renderTabs() {
   const bar = $("tabbar");
   bar.innerHTML = docs.map((d, i) => `<div class="dtab${d === cur ? " on" : ""}" role="tab" aria-selected="${d === cur}" tabindex="0" data-i="${i}" title="${esc(d.path || d.label)}">
-    <img src="${d.thumb}" alt=""><span class="meta"><b>${esc(d.label)}</b><span>${d.W}×${d.H}</span></span>
+    <img src="${d.thumb}" alt=""><span class="meta"><b>${esc(d.label)}</b><span>${d.W}×${d.H}${d.fileSize ? " · " + fmtBytes(d.fileSize) : ""}</span></span>
     <span class="close" data-close="${i}" role="button" aria-label="Close ${esc(d.label)}"><svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span></div>`).join("")
+    + loading.map(l => `<div class="dtab loading" aria-busy="true"><span class="ring-box"><i class="spin-ring"></i></span><span class="meta"><b>${esc(l.label)}</b><span data-lt="${l.id}">Loading… ${Math.round((performance.now() - l.t0) / 1000)} s</span></span></div>`).join("")
     + `<button type="button" class="addtab" id="addTab" title="Import image (Ctrl+I)" aria-label="Import image"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>`;
   bar.querySelectorAll(".dtab").forEach(el => {
     el.onclick = e => { const c = e.target.closest("[data-close]"); if (c) { e.stopPropagation(); closeDoc(docs[+c.dataset.close]); } else activate(docs[+el.dataset.i]); };
@@ -671,6 +692,10 @@ function renderList() {
   }).join("");
   $("outList").innerHTML = html || `<div class="out-note">Pick at least one resolution to see the files.</div>`;
   $("outTotal").innerHTML = s.scales.length ? `${known ? (act ? "" : "≈ ") + fmtBytes(total) : "…"}<small>${nFiles} files</small>` : "–";
+  const fmtName = { uint8: "8-bit", uint16: "16-bit", half: "16-bit half", float: "32-bit float", uint32: "32-bit" }[cur.pixelFormat] || cur.pixelFormat;
+  const chName = { 1: "BW", 2: "BW + alpha", 3: "RGB", 4: "RGBA" }[cur.channels] || "";
+  $("srcCardImg").src = cur.thumb; $("srcCardName").textContent = cur.label; $("srcCard").title = cur.path || cur.label;
+  $("srcCardMeta").innerHTML = [`${cur.W}×${cur.H}`, [fmtName, chName].filter(Boolean).join(" "), cur.fileSize ? `<span class="sz">${fmtBytes(cur.fileSize)}</span>` : ""].filter(Boolean).join(" · ");
   const root = $("outRoot"); root.textContent = s.out || "Choose an output folder in the panel on the right"; root.classList.toggle("none", !s.out);
   $("estNote").textContent = act ? "Sizes are from the last export." : APP ? "Sizes are estimated by encoding a sample of each tile." : "Rough estimate in the browser preview.";
 }
@@ -847,26 +872,52 @@ function loadNative(r) {
 function loadFile(file) {
   if (!file || !/^image\/(png|jpeg|webp|gif|bmp)$/.test(file.type)) { startError("The browser preview can only open PNG, JPG and WebP. The installed app opens all formats."); return Promise.resolve(null); }
   return new Promise(res => { const img = new Image();
-    img.onload = () => res(addDoc(img, { label: file.name, name: file.name.replace(/\.[^.]+$/, "") }));
+    img.onload = () => res(addDoc(img, { label: file.name, name: file.name.replace(/\.[^.]+$/, ""), fileSize: file.size }));
     img.onerror = () => { startError("Could not read that image."); res(null); };
     img.src = URL.createObjectURL(file); });
+}
+// Lasteindikator: plassholder-faner, linje øverst og egen visning på startskjermen
+const loading = []; let loadTimer = 0, loadSeq = 0;
+function renderLoading() {
+  const on = loading.length > 0;
+  $("loadbar").hidden = !on;
+  $("startDrop").classList.toggle("is-loading", on);
+  $("startLoading").hidden = !on;
+  if (on) {
+    const l = loading[0], secs = Math.round((performance.now() - l.t0) / 1000);
+    $("startLoadingName").textContent = `Loading ${l.label}` + (loading.length > 1 ? ` (+${loading.length - 1} more)` : "");
+    $("startLoadingTime").textContent = `${secs} s · large images can take a while`;
+    document.querySelectorAll("[data-lt]").forEach(el => { const x = loading.find(q => q.id === +el.dataset.lt); if (x) el.textContent = `Loading… ${Math.round((performance.now() - x.t0) / 1000)} s`; });
+    if (!loadTimer) loadTimer = setInterval(renderLoading, 1000);
+  } else { clearInterval(loadTimer); loadTimer = 0; }
+}
+async function loadPaths(items) { // items: [{ path, settings? }]
+  const queue = items.map(it => ({ ...it, id: ++loadSeq, label: it.path.split(/[\\/]/).pop(), t0: performance.now() }));
+  loading.push(...queue); renderTabs(); renderLoading();
+  let last = null;
+  for (const q of queue) {
+    q.t0 = performance.now(); renderTabs(); renderLoading();
+    const r = await api().load_path(q.path);
+    const d = await loadNative(q.settings ? { ...r, settings: q.settings } : r);
+    loading.splice(loading.indexOf(q), 1);
+    if (d) { last = d; if (!cur) activate(d); else renderTabs(); } else renderTabs();
+    renderLoading();
+  }
+  return last;
 }
 async function importImages() {
   closeMenu();
   if (APP) {
-    const list = await api().open_images(); let last = null;
-    for (const r of list || []) last = (await loadNative(r)) || last;
-    if (last) activate(last);
+    const paths = await api().choose_images();
+    if (paths?.length) { const last = await loadPaths(paths.map(p => ({ path: p }))); if (last) activate(last); }
   } else $("file").click();
 }
 $("file").onchange = async e => { let last = null; for (const f of e.target.files) last = (await loadFile(f)) || last; e.target.value = ""; if (last) activate(last); };
 window.onNativeDrop = async paths => {
-  let last = null;
-  for (const p of paths) {
-    if (/\.udimt$/i.test(p)) { await openProject(p); continue; }
-    last = (await loadNative(await api().load_path(p))) || last;
-  }
-  if (last) activate(last);
+  const proj = paths.find(p => /\.udimt$/i.test(p));
+  if (proj) await openProject(proj);
+  const imgs = paths.filter(p => !/\.udimt$/i.test(p));
+  if (imgs.length) { const last = await loadPaths(imgs.map(p => ({ path: p }))); if (last) activate(last); }
 };
 for (const el of [$("view"), $("startDrop")]) {
   el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("over"); });
@@ -897,12 +948,15 @@ async function openProject(path) {
   if (project.dirty && docs.length && !(await ask("Discard unsaved changes?", "The open tabs have changes that are not saved in a project.", "Discard and open"))) return;
   path = path || await api().choose_project();
   if (!path) return;
-  const r = await api().open_project(path);
+  const r = await api().read_project(path);
   if (!r.ok) return startError(r.error);
   for (const d of [...docs]) { docs.splice(docs.indexOf(d), 1); if (!d.id.startsWith("local")) api().close_doc(d.id); }
-  const loaded = [];
-  for (const t of r.tabs) { const d = await loadNative({ ...t.image, settings: t.settings }); if (d) loaded.push(d); }
-  project.path = r.path; project.label = r.label; setDirty(false);
+  cur = null; $("app").hidden = true; $("start").hidden = false;
+  project.path = r.path; project.label = r.label; renderProject();
+  const before = docs.length;
+  await loadPaths(r.tabs.map(t => ({ path: t.path, settings: t.settings })));
+  const loaded = docs.slice(before);
+  setDirty(false);
   if (r.missing.length) await ask("Some images were not found", r.missing.join("\n"), "OK", true);
   if (loaded.length) activate(loaded[Math.min(r.active, loaded.length - 1)]);
   else { cur = null; $("app").hidden = true; $("start").hidden = false; renderTabs(); }

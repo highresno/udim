@@ -104,10 +104,11 @@ class Api:
         return [os.path.abspath(p) for p in paths if os.path.exists(p)]
 
     # ---------- bilder ----------
-    def open_images(self):
+    def choose_images(self):
+        """Filvelger. Selve innlastingen skjer etterpå, så UI-et kan vise fremdrift."""
         import webview
         res = self._window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True, file_types=IMAGE_TYPES)
-        return [self.load_path(p) for p in (res or [])]
+        return [os.path.abspath(p) for p in (res or [])]
 
     def load_path(self, path: str):
         try:
@@ -117,6 +118,7 @@ class Api:
                 self._docs[doc] = src
             return {"ok": True, "doc": doc, "path": os.path.abspath(path), "label": os.path.basename(path),
                     "name": src.name, "width": src.width, "height": src.height, "channels": src.channels,
+                    "fileSize": src.file_size, "pixelFormat": src.pixel_format,
                     "linear": src.is_linear, "preview": make_preview(src)}
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "path": path, "error": f"Could not open {os.path.basename(path)}: {e}"}
@@ -163,8 +165,8 @@ class Api:
         import webview
         return _first(self._window.create_file_dialog(webview.OPEN_DIALOG, file_types=PROJECT_TYPES))
 
-    def open_project(self, path: str):
-        """Leser prosjektfilen og laster bildene. Bilder som mangler rapporteres."""
+    def read_project(self, path: str):
+        """Leser prosjektfilen og finner bildene. UI-et laster dem etterpå én for én."""
         try:
             with open(path, encoding="utf-8") as f:
                 data = json.load(f)
@@ -180,11 +182,7 @@ class Api:
             if not img:
                 missing.append(t.get("image") or "?")
                 continue
-            r = self.load_path(img)
-            if r["ok"]:
-                tabs.append({"image": r, "settings": t.get("settings", {})})
-            else:
-                missing.append(img)
+            tabs.append({"path": os.path.abspath(img), "settings": t.get("settings", {})})
         return {"ok": True, "path": path, "label": os.path.basename(path), "active": data.get("active", 0),
                 "tabs": tabs, "missing": missing}
 

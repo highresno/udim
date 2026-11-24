@@ -41,6 +41,8 @@ class SourceImage:
     path: str
     pixels: np.ndarray  # float32, H x W x C, C = 1..4
     is_linear: bool     # gjettet ut fra filtype
+    pixel_format: str = ""  # f.eks. uint8, uint16, half, float
+    file_size: int = 0
 
     @property
     def width(self) -> int:
@@ -64,6 +66,7 @@ def load_image(path: str) -> SourceImage:
     if inp is None:
         raise IOError(f"Could not open {path}: {oiio.geterror()}")
     try:
+        fmt = str(inp.spec().format)
         px = inp.read_image("float")
         if px is None:
             raise IOError(f"Could not read {path}: {inp.geterror()}")
@@ -75,7 +78,7 @@ def load_image(path: str) -> SourceImage:
     if px.shape[2] > 4:
         px = px[:, :, :4]
     ext = os.path.splitext(path)[1].lower()
-    return SourceImage(path, px, ext in LINEAR_EXTS)
+    return SourceImage(path, px, ext in LINEAR_EXTS, fmt, os.path.getsize(path))
 
 
 # --------------------------------------------------------------------------- #
