@@ -1,0 +1,767 @@
+<title>UDIM Tiler</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fullskjerms verktøy. Visningen fyller venstre side med flytende kontroller for X×Y; et rolig sidepanel til høyre; eksportknapp alltid synlig nederst. Mørk-først, som 3D-programmer. */
+:root {
+  --bg: #0f1115; --surface: #161920; --raised: #1d212a; --hover: #252a35; --line: #2a2f3a;
+  --fg: #e9ebf0; --muted: #8b93a3; --faint: #5d6474;
+  --accent: #7aa2ff; --accent-soft: rgba(122,162,255,.14); --accent-fg: #0b1020;
+  --pad: rgba(255,110,110,.20); --ok: #5fd39a;
+  --font: "Manrope", system-ui, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #e9ecf2; --surface: #ffffff; --raised: #f3f5f9; --hover: #e8ebf2; --line: #dde1e9;
+  --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
+  --accent: #3d6cf0; --accent-soft: rgba(61,108,240,.10); --accent-fg: #ffffff;
+  --pad: rgba(230,70,70,.16); --ok: #16935a; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #e9ecf2; --surface: #ffffff; --raised: #f3f5f9; --hover: #e8ebf2; --line: #dde1e9;
+  --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
+  --accent: #3d6cf0; --accent-soft: rgba(61,108,240,.10); --accent-fg: #ffffff;
+  --pad: rgba(230,70,70,.16); --ok: #16935a; color-scheme: light; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--font);
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-block: 12px;
+  -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+@media (max-width: 920px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 56vh auto; height: auto; } }
+
+/* ---------- Toppfelt ---------- */
+.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; }
+.brand svg { color: var(--accent); }
+.src { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 14px 5px 5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; transition: border-color .15s; }
+.src:hover { border-color: var(--accent); }
+.src canvas { width: 30px; height: 30px; border-radius: 50%; display: block; flex: none; }
+.src .meta { display: grid; min-width: 0; text-align: left; line-height: 1.2; }
+.src .meta b { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src .meta span { font: 11px var(--mono); color: var(--muted); }
+.spacer { flex: 1; }
+.proto { font-size: 11px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 640px) { .proto { display: none; } }
+
+/* ---------- Visning ---------- */
+.view { position: relative; min-height: 0; border-radius: 14px; overflow: hidden; background: radial-gradient(circle at 50% 40%, var(--raised), var(--bg) 75%); border: 1px solid var(--line); }
+.view.over { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hud { position: absolute; display: flex; gap: 8px; align-items: center; }
+.hud-tl { top: 14px; left: 14px; right: 14px; flex-wrap: wrap; }
+.hud-b { bottom: 16px; left: 50%; transform: translateX(-50%); }
+.pill { background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.pill b { color: var(--fg); font-weight: 500; }
+.pill.warn b { color: #ff9a8a; }
+
+.dims { display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 16px; background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+.stepper { display: flex; align-items: center; gap: 2px; }
+.stepper .ax { font: 600 11px var(--mono); color: var(--muted); width: 18px; text-align: center; }
+.stepper button { width: 30px; height: 30px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); display: grid; place-items: center; transition: background .12s, color .12s; }
+.stepper button:hover:not(:disabled) { background: var(--hover); color: var(--fg); }
+.stepper button:disabled { opacity: .3; cursor: default; }
+.stepper output { min-width: 26px; text-align: center; font: 600 17px var(--mono); font-variant-numeric: tabular-nums; cursor: ns-resize; user-select: none; touch-action: none; }
+.times { color: var(--faint); font-size: 14px; padding: 0 2px; }
+.gridbtn { width: 34px; height: 34px; border-radius: 10px; border: 0; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-left: 4px; transition: background .12s, color .12s; }
+.gridbtn:hover, .gridbtn[aria-expanded="true"] { background: var(--accent); color: var(--accent-fg); }
+
+.picker { position: absolute; bottom: 74px; left: 50%; transform: translateX(-50%) translateY(6px); opacity: 0; pointer-events: none;
+  transition: opacity .16s, transform .16s; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 16px 50px rgba(0,0,0,.45); }
+.picker.open { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+.picker-grid { display: grid; grid-template-columns: repeat(10, 18px); gap: 3px; }
+.picker-grid i { width: 18px; height: 18px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line); cursor: pointer; transition: background .06s, border-color .06s; }
+.picker-grid i.on { background: var(--accent-soft); border-color: var(--accent); }
+.picker-cap { margin-top: 8px; font: 12px var(--mono); color: var(--muted); text-align: center; }
+.picker-cap b { color: var(--fg); }
+
+/* ---------- Sidepanel ---------- */
+.side { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.scroll { overflow-y: auto; padding: 4px 18px 16px; scrollbar-width: thin; }
+.sec { padding-block: 16px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; }
+.sec:last-child { border-bottom: 0; }
+.sec h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em; display: flex; justify-content: space-between; align-items: baseline; }
+.sec h3 small { font: 11px var(--mono); color: var(--faint); font-weight: 400; }
+.field { display: grid; gap: 6px; }
+.field > label, .lbl { font-size: 12px; color: var(--muted); }
+
+.seg { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--raised); border-radius: 10px; padding: 3px; }
+.seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; border-radius: 8px; background: var(--hover); box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .22s cubic-bezier(.3,.7,.2,1), width .22s; }
+.seg.accent .thumb { background: var(--accent); }
+.seg label { position: relative; z-index: 1; text-align: center; padding: 7px 4px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-radius: 8px; transition: color .15s; user-select: none; }
+.seg label:has(input:checked) { color: var(--fg); }
+.seg.accent label:has(input:checked) { color: var(--accent-fg); }
+.seg label:has(input:disabled) { opacity: .3; cursor: not-allowed; }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg.big label { padding: 10px 4px; font-size: 14px; }
+
+.chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.chip { position: relative; display: grid; gap: 1px; padding: 8px 4px; border-radius: 10px; background: var(--raised); border: 1px solid transparent; cursor: pointer; text-align: center; transition: background .15s, border-color .15s; user-select: none; }
+.chip:hover { background: var(--hover); }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip b { font-size: 13px; font-weight: 700; }
+.chip span { font: 10px var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; }
+.chip:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.chip:has(input:checked) b { color: var(--accent); }
+.chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.range { display: grid; gap: 8px; }
+.range-top { display: flex; justify-content: space-between; align-items: baseline; }
+.range-top output { font: 500 12px var(--mono); color: var(--fg); font-variant-numeric: tabular-nums; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; margin: 0; cursor: pointer; --p: 50%; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--p), var(--hover) var(--p)); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--hover); }
+input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); transition: box-shadow .15s, transform .15s; }
+input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); }
+input[type=range]:active::-webkit-slider-thumb { transform: scale(1.12); box-shadow: 0 0 0 7px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); }
+input[type=range]:disabled { opacity: .35; cursor: default; }
+.ticks { display: flex; justify-content: space-between; font: 10px var(--mono); color: var(--faint); margin-top: -4px; }
+
+.text, .sel { width: 100%; background: var(--raised); border: 1px solid transparent; border-radius: 10px; padding: 9px 11px; transition: border-color .15s, background .15s; }
+.text:hover, .sel:hover { background: var(--hover); }
+.text:focus, .sel:focus { border-color: var(--accent); outline: none; background: var(--raised); }
+.sel { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 52%, calc(100% - 11px) 52%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; cursor: pointer; }
+.sel option { background: var(--surface); }
+.withbtn { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.ghost { border: 0; background: var(--raised); border-radius: 10px; padding: 0 14px; color: var(--muted); transition: background .12s, color .12s; }
+.ghost:hover { background: var(--hover); color: var(--fg); }
+
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; }
+.toggle input { appearance: none; -webkit-appearance: none; width: 36px; height: 20px; border-radius: 10px; background: var(--hover); position: relative; flex: none; cursor: pointer; transition: background .18s; margin: 0; }
+.toggle input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .18s cubic-bezier(.3,.7,.2,1); }
+.toggle input:checked { background: var(--accent); }
+.toggle input:checked::after { transform: translateX(16px); }
+
+details.adv summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); padding-block: 2px; }
+details.adv summary::-webkit-details-marker { display: none; }
+details.adv summary svg { transition: transform .2s; }
+details.adv[open] summary svg { transform: rotate(90deg); }
+details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
+
+.path { font: 11.5px/1.7 var(--mono); background: var(--bg); border-radius: 10px; padding: 10px 12px; overflow-x: auto; white-space: pre; color: var(--muted); }
+.path .f { color: var(--fg); }
+.path .n { color: var(--accent); }
+
+.foot { padding: 12px 18px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; background: var(--surface); }
+.summary { font: 11px var(--mono); color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.export { position: relative; overflow: hidden; border: 0; border-radius: 12px; padding: 13px; background: var(--accent); color: var(--accent-fg); font-weight: 700; font-size: 15px; letter-spacing: .01em; transition: filter .15s, transform .08s; }
+.export:hover:not(:disabled) { filter: brightness(1.08); }
+.export:active:not(:disabled) { transform: scale(.99); }
+.export:disabled { opacity: .45; cursor: not-allowed; }
+.export .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255,255,255,.28); }
+.export span { position: relative; }
+.confirm { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; font-size: 12px; color: var(--fg); background: var(--accent-soft); border-radius: 10px; padding: 8px 8px 8px 12px; }
+.confirm button { border: 0; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; background: var(--raised); }
+.confirm button.yes { background: var(--accent); color: var(--accent-fg); }
+
+/* ---------- Resultatark ---------- */
+.sheet-bg { position: fixed; inset: 0; background: rgba(5,7,12,.55); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+.sheet { position: fixed; z-index: 21; right: max(12px, env(safe-area-inset-right, 0px)); top: max(12px, env(safe-area-inset-top, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  width: min(560px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr); transform: translateX(calc(100% + 30px)); visibility: hidden; transition: transform .28s cubic-bezier(.3,.7,.2,1), visibility 0s .28s; }
+.sheet.open { transform: none; visibility: visible; transition: transform .28s cubic-bezier(.3,.7,.2,1); }
+.sheet-bg.open { opacity: 1; pointer-events: auto; }
+.sheet header { display: flex; align-items: center; gap: 10px; padding: 16px 18px 6px; }
+.sheet header h2 { margin: 0; font-size: 16px; flex: 1; display: flex; align-items: center; gap: 10px; }
+.sheet header h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 20%, transparent); }
+.x { width: 32px; height: 32px; border: 0; border-radius: 9px; background: var(--raised); color: var(--muted); display: grid; place-items: center; }
+.x:hover { background: var(--hover); color: var(--fg); }
+.tabs { display: flex; gap: 4px; padding: 6px 18px 10px; overflow-x: auto; }
+.tab { border: 0; border-radius: 8px; padding: 6px 10px; background: transparent; color: var(--muted); font: 12px var(--mono); white-space: nowrap; }
+.tab:hover { background: var(--raised); }
+.tab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+.sheet-body { overflow: auto; padding: 0 18px 18px; }
+.folder-path { font: 11.5px var(--mono); color: var(--muted); word-break: break-all; margin-bottom: 12px; }
+.folder-path b { color: var(--fg); font-weight: 500; }
+.tiles { display: grid; gap: 6px; }
+.tile { display: grid; gap: 4px; min-width: 0; }
+.tile canvas { width: 100%; height: auto; border-radius: 6px; display: block; background: var(--raised); }
+.tile span { font: 10.5px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile span b { color: var(--accent); font-weight: 500; }
+.sheet-note { font-size: 12px; color: var(--faint); margin: 14px 0 0; }
+
+.upd-wrap { position: relative; }
+.upd { display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 600; transition: border-color .15s, color .15s; }
+.upd:hover { border-color: var(--accent); color: var(--fg); }
+.upd.spin svg { animation: spin .9s linear infinite; }
+.upd.has { color: var(--accent); border-color: var(--accent); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.upd-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 320px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45); display: grid; gap: 8px; }
+.upd-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.upd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.upd-dot.ok { background: var(--ok); } .upd-dot.new { background: var(--accent); } .upd-dot.err { background: #ff8a7a; }
+.upd-pop p { margin: 0; font-size: 13px; color: var(--muted); }
+.upd-pop ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--fg); display: grid; gap: 3px; max-height: 160px; overflow: auto; }
+.upd-pop ul:empty { display: none; }
+.upd-meta { font: 11px var(--mono); color: var(--faint); }
+.upd-go { position: relative; overflow: hidden; border: 0; border-radius: 10px; padding: 10px; background: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.upd-go .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(255,255,255,.3); }
+.upd-go span { position: relative; }
+.openf { border: 0; border-radius: 9px; padding: 7px 12px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
+.openf:hover { background: var(--accent); color: var(--accent-fg); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 40; background: var(--surface); border: 1px solid #ff8a7a; color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,.4); max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="11" width="8" height="8" rx="2" fill="currentColor"/><rect x="11" y="11" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+      UDIM Tiler
+    </div>
+    <button class="src" id="srcBtn" type="button" title="Åpne et annet bilde, eller dra det inn i visningen">
+      <canvas id="srcThumb" width="60" height="60"></canvas>
+      <span class="meta"><b id="srcName">Eksempelbilde</b><span id="srcSize"></span></span>
+    </button>
+    <input type="file" id="file" accept="image/*" hidden>
+    <div class="spacer"></div>
+    <span class="proto" id="protoNote">Nettleserversjon · eksporten er simulert</span>
+    <div class="upd-wrap">
+      <button type="button" class="upd" id="updBtn" title="Se etter oppdatering på GitHub"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="verLbl">Oppdater</span></button>
+      <div class="upd-pop" id="updPop" hidden>
+        <div class="upd-head"><span class="upd-dot" id="updDot"></span><b id="updTitle">Sjekker…</b></div>
+        <p id="updMsg"></p>
+        <ul id="updChanges"></ul>
+        <div class="upd-meta" id="updMeta"></div>
+        <button type="button" class="upd-go" id="updGo" hidden><i class="fill" id="updFill"></i><span id="updGoLbl">Oppdater nå</span></button>
+      </div>
+    </div>
+  </div>
+
+  <main class="view" id="view">
+    <canvas id="cv" aria-label="Forhåndsvisning med UDIM-rutenett"></canvas>
+    <div class="hud hud-tl">
+      <span class="pill">tile <b id="hTile">–</b></span>
+      <span class="pill" id="hFit"></span>
+    </div>
+    <div class="picker" id="picker" role="dialog" aria-label="Velg antall tiles">
+      <div class="picker-grid" id="pickerGrid"></div>
+      <div class="picker-cap" id="pickerCap"></div>
+    </div>
+    <div class="hud hud-b">
+      <div class="dims">
+        <div class="stepper" data-axis="x">
+          <span class="ax">X</span>
+          <button type="button" data-d="-1" aria-label="Færre tiles i X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <output id="txOut" title="Dra opp eller ned, eller rull, for å endre">3</output>
+          <button type="button" data-d="1" aria-label="Flere tiles i X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        </div>
+        <span class="times">×</span>
+        <div class="stepper" data-axis="y">
+          <span class="ax">Y</span>
+          <button type="button" data-d="-1" aria-label="Færre tiles i Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <output id="tyOut" title="Dra opp eller ned, eller rull, for å endre">2</output>
+          <button type="button" data-d="1" aria-label="Flere tiles i Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        </div>
+        <button type="button" class="gridbtn" id="gridBtn" aria-expanded="false" aria-label="Velg antall i rutenett">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="4" height="4" rx="1"/><rect x="6" y="1" width="4" height="4" rx="1"/><rect x="11" y="1" width="4" height="4" rx="1"/><rect x="1" y="6" width="4" height="4" rx="1"/><rect x="6" y="6" width="4" height="4" rx="1"/><rect x="11" y="6" width="4" height="4" rx="1"/><rect x="1" y="11" width="4" height="4" rx="1"/><rect x="6" y="11" width="4" height="4" rx="1"/><rect x="11" y="11" width="4" height="4" rx="1"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <form class="side" id="form" autocomplete="off">
+    <div class="scroll">
+      <section class="sec">
+        <h3>Navn og deling</h3>
+        <div class="field"><label for="name">Navn</label><input class="text" type="text" id="name" value="Rock_Wall"></div>
+        <div class="field"><span class="lbl">Hvis bildet ikke går opp</span>
+          <div class="seg" id="fitSeg">
+            <span class="thumb"></span>
+            <label><input type="radio" name="fit" value="pad" checked>Fyll ut</label>
+            <label><input type="radio" name="fit" value="crop">Beskjær</label>
+            <label><input type="radio" name="fit" value="stretch">Strekk</label>
+          </div></div>
+      </section>
+
+      <section class="sec">
+        <h3>Oppløsning <small>velg én eller flere</small></h3>
+        <div class="chips" id="scales">
+          <label class="chip"><input type="checkbox" value="1" id="s1" checked><b>1:1</b><span></span></label>
+          <label class="chip"><input type="checkbox" value="2" id="s2" checked><b>1/2</b><span></span></label>
+          <label class="chip"><input type="checkbox" value="4" id="s4"><b>1/4</b><span></span></label>
+          <label class="chip"><input type="checkbox" value="8" id="s8"><b>1/8</b><span></span></label>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>Format</h3>
+        <div class="seg accent big" id="fmtSeg">
+          <span class="thumb"></span>
+          <label><input type="radio" name="fmt" value="PNG" checked>PNG</label>
+          <label><input type="radio" name="fmt" value="EXR">EXR</label>
+          <label><input type="radio" name="fmt" value="JPG">JPG</label>
+        </div>
+        <div class="seg" id="chSeg">
+          <span class="thumb"></span>
+          <label><input type="radio" name="ch" value="BW">BW</label>
+          <label><input type="radio" name="ch" value="RGB" checked>RGB</label>
+          <label><input type="radio" name="ch" value="RGBA" id="cRGBA">RGBA</label>
+        </div>
+        <div class="seg" id="depthSeg"></div>
+        <div class="field" id="codecField"><label for="codec">Codec</label>
+          <select class="sel" id="codec">
+            <option value="zip">ZIP · tapsfri, god allround</option>
+            <option value="zips">ZIPS · tapsfri, per linje</option>
+            <option value="piz">PIZ · tapsfri, god på støy</option>
+            <option value="dwaa">DWAA · med tap, små filer</option>
+            <option value="dwab">DWAB · med tap, store blokker</option>
+            <option value="pxr24">PXR24 · med tap på float</option>
+            <option value="b44">B44 · med tap, rask</option>
+            <option value="b44a">B44A · med tap, rask</option>
+            <option value="rle">RLE · tapsfri, enkel</option>
+            <option value="none">Ingen komprimering</option>
+          </select></div>
+        <div class="range">
+          <div class="range-top"><span class="lbl" id="compLabel">Komprimering</span><output id="compOut" for="comp"></output></div>
+          <input type="range" id="comp" min="0" max="100" value="50" aria-labelledby="compLabel">
+          <div class="ticks" id="ticks"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h3>Utdata</h3>
+        <div class="field"><label for="outDir">Mappe</label>
+          <div class="withbtn"><input class="text" type="text" id="outDir" value="D:\Teksturer\Eksport"><button type="button" class="ghost" id="pickDir">Velg</button></div></div>
+        <div class="field"><span class="lbl">Filnavn</span>
+          <div class="seg" id="sepSeg">
+            <span class="thumb"></span>
+            <label><input type="radio" name="sep" value="_" checked>Navn_1001</label>
+            <label><input type="radio" name="sep" value=".">Navn.1001</label>
+          </div></div>
+        <div class="path" id="path"></div>
+        <details class="adv">
+          <summary><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Avansert</summary>
+          <div class="inner">
+            <label class="toggle">Konverter fargerom <input type="checkbox" id="convert" checked></label>
+            <p class="lbl" style="margin:-6px 0 0">EXR lagres lineært, PNG og JPG som sRGB.</p>
+            <div class="field"><label for="space">Kildens fargerom</label>
+              <select class="sel" id="space"><option value="auto">Automatisk (EXR/HDR = lineær)</option><option value="srgb">sRGB</option><option value="linear">Lineær</option></select></div>
+            <div class="field"><label for="filter">Skaleringsfilter</label>
+              <select class="sel" id="filter"><option>Lanczos</option><option>Bilinear</option><option>Box</option></select></div>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <div class="foot">
+      <div class="confirm" id="confirm" hidden><span id="confirmText"></span><button type="button" id="cNo">Avbryt</button><button type="button" class="yes" id="cYes">Overskriv</button></div>
+      <div class="summary"><span id="sumL"></span><span id="sumR"></span></div>
+      <button type="submit" class="export" id="exportBtn"><i class="fill" id="fill"></i><span id="exportLbl">Eksporter</span></button>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="sheet-bg" id="sheetBg"></div>
+<aside class="sheet" id="sheet" aria-label="Eksportresultat">
+  <header><h2><span class="dot"></span><span id="sheetTitle">Eksportert</span></h2><button type="button" class="x" id="sheetX" aria-label="Lukk"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></header>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</aside>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+let src, proxy;
+const exported = new Set();
+const state = { tx: 3, ty: 2 };
+const anim = { tx: 3, ty: 2, k: 0, ox: 0, oy: 0 };
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- Eksempelbilde ----------
+function makeSample() {
+  const c = document.createElement("canvas"); c.width = 4000; c.height = 1850;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, c.width, c.height);
+  grd.addColorStop(0, "#56616b"); grd.addColorStop(.5, "#867660"); grd.addColorStop(1, "#4c5746");
+  g.fillStyle = grd; g.fillRect(0, 0, c.width, c.height);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const bh = 180;
+  for (let y = 0, r = 0; y < c.height; y += bh, r++) for (let x = -(r % 2) * 160; x < c.width;) {
+    const w = 240 + rnd() * 160;
+    g.fillStyle = `hsl(${22 + rnd() * 22} ${10 + rnd() * 18}% ${28 + rnd() * 34}%)`;
+    g.beginPath(); g.roundRect(x + 8, y + 8, w - 16, bh - 16, 18); g.fill();
+    g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(x + 14, y + 12, w - 28, 10);
+    x += w;
+  }
+  return c;
+}
+function setSource(img, name, label, realW, realH) {
+  src = img;
+  const W = realW || img.naturalWidth || img.width, H = realH || img.naturalHeight || img.height;
+  src.W = W; src.H = H;
+  const s = Math.min(1, 1800 / Math.max(W, H));
+  proxy = document.createElement("canvas"); proxy.width = Math.max(1, Math.round(W * s)); proxy.height = Math.max(1, Math.round(H * s));
+  proxy.getContext("2d").drawImage(img, 0, 0, proxy.width, proxy.height);
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, t = $("srcThumb").getContext("2d"), m = Math.min(iw, ih);
+  t.clearRect(0, 0, 60, 60); t.drawImage(img, (iw - m) / 2, (ih - m) / 2, m, m, 0, 0, 60, 60);
+  $("srcName").textContent = label; $("srcSize").textContent = `${W}×${H}`;
+  $("name").value = name; exported.clear(); anim.k = 0; update();
+}
+
+// ---------- Logikk ----------
+const val = n => document.querySelector(`[name=${n}]:checked`)?.value;
+function S() {
+  const fmt = val("fmt");
+  return { name: $("name").value.trim() || "Navn", out: $("outDir").value.trim(), tx: state.tx, ty: state.ty, fit: val("fit"),
+    scales: [...document.querySelectorAll("#scales input:checked")].map(i => +i.value), fmt, ch: val("ch"),
+    depth: fmt === "JPG" ? "8" : (val("depth") || "8"), codec: $("codec").value, comp: +$("comp").value, sep: val("sep"),
+    space: $("space").value, convert: $("convert").checked, filter: $("filter").value };
+}
+const udim = (u, v) => 1001 + u + 10 * v;
+const baseTile = (w, h, s) => s.fit === "crop" ? [Math.max(1, Math.floor(w / s.tx)), Math.max(1, Math.floor(h / s.ty))] : [Math.ceil(w / s.tx), Math.ceil(h / s.ty)];
+const tileSize = (w, h, s, d) => baseTile(w, h, s).map(n => Math.max(1, Math.round(n / d)));
+const levelCodecs = ["zip", "zips", "dwaa", "dwab"];
+const compTag = s => s.fmt === "PNG" ? s.comp + "%" : s.fmt === "JPG" ? "q" + Math.max(1, s.comp) : levelCodecs.includes(s.codec) ? `${s.codec}_${s.comp}%` : s.codec;
+const folderName = (s, tw, th) => `${s.name}_${s.fmt}_${s.ch}_${{ "8": "8bit", "16": "16bit", half: "half", float: "float" }[s.depth]}_${compTag(s)}_${tw}_${th}`;
+const fileName = (s, n) => `${s.name}${s.sep}${n}.${s.fmt.toLowerCase()}`;
+const esc = t => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------- Segmenterte kontroller med glidende markør ----------
+function placeThumb(seg) {
+  const th = seg.querySelector(".thumb"), on = seg.querySelector("input:checked")?.parentElement;
+  if (!th || !on) return;
+  th.style.width = on.offsetWidth + "px"; th.style.transform = `translateX(${on.offsetLeft - 3}px)`;
+}
+const segs = () => document.querySelectorAll(".seg");
+
+function syncFormat() {
+  const fmt = val("fmt"), prev = val("depth");
+  const opts = fmt === "PNG" ? [["8", "8 bit"], ["16", "16 bit"]] : fmt === "EXR" ? [["half", "Half · 16"], ["float", "Full · 32"]] : [];
+  const key = opts.map(o => o[0]).join(), ds = $("depthSeg");
+  if (ds.dataset.key !== key) {
+    ds.dataset.key = key;
+    ds.innerHTML = `<span class="thumb"></span>` + opts.map(([v, l], i) => `<label><input type="radio" name="depth" value="${v}" ${(prev === v || (!opts.some(o => o[0] === prev) && !i)) ? "checked" : ""}>${l}</label>`).join("");
+  }
+  ds.hidden = fmt === "JPG";
+  $("codecField").hidden = fmt !== "EXR";
+  $("cRGBA").disabled = fmt === "JPG";
+  if (fmt === "JPG" && $("cRGBA").checked) document.querySelector("[name=ch][value=RGB]").checked = true;
+  $("compLabel").textContent = fmt === "JPG" ? "Kvalitet" : "Komprimering";
+  $("ticks").innerHTML = fmt === "JPG" ? "<span>mindre filer</span><span>bedre kvalitet</span>" : "<span>raskere</span><span>mindre filer</span>";
+  $("comp").disabled = fmt === "EXR" && !levelCodecs.includes($("codec").value);
+}
+function compText(s) {
+  const v = s.comp;
+  if (s.fmt === "PNG") return `${v}%  ·  zlib ${Math.round(v / 100 * 9)}`;
+  if (s.fmt === "JPG") return `${Math.max(1, v)}`;
+  if (s.codec === "zip" || s.codec === "zips") return `${v}%  ·  nivå ${Math.max(1, Math.round(v / 100 * 9))}`;
+  if (s.codec === "dwaa" || s.codec === "dwab") return `DWA ${Math.max(1, v)}`;
+  return "brukes ikke";
+}
+
+// ---------- Oppdatering av panel ----------
+function update() {
+  syncFormat();
+  const s = S(), W = src.W, H = src.H, [tw, th] = baseTile(W, H, s);
+  $("txOut").textContent = s.tx; $("tyOut").textContent = s.ty;
+  document.querySelectorAll(".stepper").forEach(st => {
+    const ax = st.dataset.axis, v = state["t" + ax], max = ax === "x" ? 10 : 20;
+    st.querySelector('[data-d="-1"]').disabled = v <= 1; st.querySelector('[data-d="1"]').disabled = v >= max;
+  });
+  const c = $("comp"); c.style.setProperty("--p", c.value + "%");
+  $("compOut").textContent = compText(s);
+  document.querySelectorAll("#scales .chip").forEach(ch => {
+    const d = +ch.querySelector("input").value, [a, b] = tileSize(W, H, s, d);
+    ch.querySelector("span").textContent = `${a}×${b}`;
+  });
+  $("hTile").textContent = `${tw}×${th}`;
+  const cw = tw * s.tx, chh = th * s.ty, hf = $("hFit");
+  if (s.fit === "pad") { const d = cw - W || chh - H; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `utfylling <b>+${cw - W} × +${chh - H} px</b>` : `går opp <b>✓</b>`; }
+  else if (s.fit === "crop") { const d = W - cw || H - chh; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `beskjæres <b>−${W - cw} × −${H - chh} px</b>` : `går opp <b>✓</b>`; }
+  else { hf.className = "pill"; hf.innerHTML = `strekkes til <b>${cw}×${chh}</b>`; }
+  if (!s.scales.length) $("path").textContent = "Velg minst én oppløsning";
+  else {
+    let o = `${esc(s.out || "(ingen mappe)")}\\\n`;
+    s.scales.forEach(d => { const [a, b] = tileSize(W, H, s, d); o += `  <span class="f">${esc(folderName(s, a, b))}</span>\\\n`; });
+    o += `    <span class="n">${esc(fileName(s, 1001))}</span> … <span class="n">${esc(fileName(s, udim(s.tx - 1, s.ty - 1)))}</span>`;
+    $("path").innerHTML = o;
+  }
+  const n = s.tx * s.ty * s.scales.length;
+  $("sumL").textContent = `${n} filer · ${s.scales.length} mappe${s.scales.length === 1 ? "" : "r"}`;
+  $("sumR").textContent = `${s.fmt} · ${s.ch} · ${s.fmt === "JPG" ? "8 bit" : { "8": "8 bit", "16": "16 bit", half: "half", float: "full" }[s.depth]}`;
+  if (!busy) $("exportBtn").disabled = !s.scales.length || !s.out || (APP && !realLoaded);
+  $("exportLbl").textContent = busy ? $("exportLbl").textContent : (APP && !realLoaded ? "Åpne et bilde for å eksportere" : "Eksporter");
+  $("confirm").hidden = true;
+  segs().forEach(placeThumb);
+  kick();
+}
+
+// ---------- Visning (animert) ----------
+let raf = 0;
+const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+function target() {
+  const s = S(), W = src.W, H = src.H, [tw, th] = baseTile(W, H, s);
+  const cw = tw * s.tx, ch = th * s.ty;
+  const ew = s.fit === "stretch" ? cw : Math.max(W, cw), eh = s.fit === "stretch" ? ch : Math.max(H, ch);
+  const r = cv.getBoundingClientRect(), padT = 58, padB = 92, padX = 36;
+  const k = Math.max(1e-4, Math.min((r.width - 2 * padX) / ew, (r.height - padT - padB) / eh));
+  return { s, W, H, cw, ch, ew, eh, k, ox: (r.width - ew * k) / 2, oy: padT + (r.height - padT - padB - eh * k) / 2, r };
+}
+function frame() {
+  raf = 0;
+  const T = target(), s = T.s, a = reduce ? 1 : .2;
+  if (!anim.k) Object.assign(anim, { k: T.k, ox: T.ox, oy: T.oy, tx: s.tx, ty: s.ty });
+  let moving = false;
+  for (const [key, tv] of [["k", T.k], ["ox", T.ox], ["oy", T.oy], ["tx", s.tx], ["ty", s.ty]]) {
+    const d = tv - anim[key], eps = key === "k" ? T.k * 1e-3 : key[0] === "t" ? .003 : .3;
+    if (Math.abs(d) > eps) { anim[key] += d * a; moving = true; } else anim[key] = tv;
+  }
+  draw(T);
+  if (moving) kick();
+}
+function draw(T) {
+  const { s, W, H, cw, ch, eh, r } = T, { k, ox, oy } = anim;
+  const dpr = devicePixelRatio || 1;
+  if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, r.width, r.height);
+  const css = getComputedStyle(document.documentElement), acc = css.getPropertyValue("--accent").trim();
+  const bottom = oy + eh * k; // alt forankres nede til venstre, der 1001 ligger
+  const C = { x: ox, y: bottom - ch * k, w: cw * k, h: ch * k };
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+  ctx.fillStyle = "#000"; ctx.fillRect(C.x, C.y, C.w, C.h); ctx.restore();
+  if (s.fit === "stretch") ctx.drawImage(proxy, C.x, C.y, C.w, C.h);
+  else {
+    if (s.fit === "pad") {
+      ctx.fillStyle = css.getPropertyValue("--raised").trim(); ctx.fillRect(C.x, C.y, C.w, C.h);
+      ctx.fillStyle = css.getPropertyValue("--pad").trim(); ctx.fillRect(C.x, C.y, C.w, C.h);
+    }
+    ctx.drawImage(proxy, ox, bottom - H * k, W * k, H * k);
+    if (s.fit === "crop") {
+      ctx.fillStyle = "rgba(8,10,14,.7)";
+      ctx.fillRect(ox + cw * k, bottom - H * k, (W - cw) * k, H * k);
+      ctx.fillRect(ox, bottom - H * k, cw * k, (H - ch) * k);
+    }
+  }
+  const gx = C.w / anim.tx, gy = C.h / anim.ty;
+  ctx.save(); ctx.beginPath(); ctx.rect(C.x - 1, C.y - 1, C.w + 2, C.h + 2); ctx.clip();
+  const lines = () => { ctx.beginPath();
+    for (let i = 1; i < anim.tx; i++) { const x = Math.round(C.x + i * gx) + .5; ctx.moveTo(x, C.y); ctx.lineTo(x, C.y + C.h); }
+    for (let j = 1; j < anim.ty; j++) { const y = Math.round(C.y + C.h - j * gy) + .5; ctx.moveTo(C.x, y); ctx.lineTo(C.x + C.w, y); }
+    ctx.stroke(); };
+  ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 3; lines();
+  ctx.strokeStyle = acc; ctx.lineWidth = 1; lines();
+  ctx.lineWidth = 1.5; ctx.strokeRect(C.x + .75, C.y + .75, C.w - 1.5, C.h - 1.5);
+  const fs = Math.max(9, Math.min(14, gx / 6, gy / 4));
+  ctx.font = `500 ${fs}px "JetBrains Mono", Consolas, monospace`; ctx.textBaseline = "middle";
+  for (let v = 0; v < Math.ceil(anim.ty); v++) for (let u = 0; u < Math.ceil(anim.tx); u++) {
+    const fade = Math.min(1, anim.tx - u, anim.ty - v); if (fade <= .05) continue;
+    const t = String(udim(u, v)), tw = ctx.measureText(t).width;
+    const x = C.x + u * gx + 7, y = C.y + C.h - (v + 1) * gy + 7;
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(10,12,18,.72)"; ctx.beginPath(); ctx.roundRect(x, y, tw + 12, fs + 10, 6); ctx.fill();
+    ctx.fillStyle = u === 0 && v === 0 ? acc : "#fff"; ctx.fillText(t, x + 6, y + (fs + 10) / 2 + .5);
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+// ---------- X/Y: knapper, hjul, dra, rutevelger, piltaster ----------
+function setDims(tx, ty) {
+  tx = Math.max(1, Math.min(10, tx)); ty = Math.max(1, Math.min(20, ty));
+  if (tx === state.tx && ty === state.ty) return;
+  state.tx = tx; state.ty = ty; update();
+}
+document.querySelectorAll(".stepper").forEach(st => {
+  const ax = st.dataset.axis, bump = d => ax === "x" ? setDims(state.tx + d, state.ty) : setDims(state.tx, state.ty + d);
+  st.querySelectorAll("button").forEach(b => b.onclick = () => bump(+b.dataset.d));
+  st.addEventListener("wheel", e => { e.preventDefault(); bump(e.deltaY < 0 ? 1 : -1); }, { passive: false });
+  const out = st.querySelector("output");
+  out.addEventListener("pointerdown", e => {
+    out.setPointerCapture(e.pointerId); let y0 = e.clientY, acc = 0;
+    const mv = ev => { acc += y0 - ev.clientY; y0 = ev.clientY; while (Math.abs(acc) >= 14) { bump(Math.sign(acc)); acc -= 14 * Math.sign(acc); } };
+    const up = () => { out.removeEventListener("pointermove", mv); out.removeEventListener("pointerup", up); };
+    out.addEventListener("pointermove", mv); out.addEventListener("pointerup", up);
+  });
+});
+const PR = 8, grid = $("pickerGrid");
+for (let r = PR - 1; r >= 0; r--) for (let c = 0; c < 10; c++) { const i = document.createElement("i"); i.dataset.u = c; i.dataset.v = r; grid.append(i); }
+function paintPicker(tx, ty) {
+  grid.querySelectorAll("i").forEach(i => i.classList.toggle("on", +i.dataset.u < tx && +i.dataset.v < ty));
+  $("pickerCap").innerHTML = `<b>${tx} × ${ty}</b> · 1001–${udim(tx - 1, ty - 1)}`;
+}
+grid.addEventListener("pointerover", e => { const i = e.target.closest("i"); if (i) paintPicker(+i.dataset.u + 1, +i.dataset.v + 1); });
+grid.addEventListener("pointerleave", () => paintPicker(state.tx, state.ty));
+grid.addEventListener("click", e => { const i = e.target.closest("i"); if (i) { setDims(+i.dataset.u + 1, +i.dataset.v + 1); togglePicker(false); } });
+function togglePicker(open) { $("picker").classList.toggle("open", open); $("gridBtn").setAttribute("aria-expanded", open); if (open) paintPicker(state.tx, state.ty); }
+$("gridBtn").onclick = e => { e.stopPropagation(); togglePicker(!$("picker").classList.contains("open")); };
+document.addEventListener("click", e => { if (!e.target.closest("#picker")) togglePicker(false); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { togglePicker(false); closeSheet(); }
+  if (e.target.closest("input, select, textarea")) return;
+  const m = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+  if (m) { e.preventDefault(); setDims(state.tx + m[0], state.ty + m[1]); }
+});
+
+// ---------- Eksport (simulert) ----------
+let busy = false, lastResult = null;
+function planned(s) {
+  const out = [];
+  for (const d of s.scales) { const [tw, th] = tileSize(src.W, src.H, s, d), folder = folderName(s, tw, th);
+    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) out.push({ d, tw, th, folder, u, v, file: fileName(s, udim(u, v)) }); }
+  return out;
+}
+$("form").addEventListener("submit", async e => {
+  e.preventDefault(); if (busy) return;
+  const s = S(), files = planned(s);
+  const clash = APP ? await api().count_existing(s) : files.filter(f => exported.has(f.folder + "/" + f.file)).length;
+  if (clash) { $("confirmText").textContent = `${clash} filer finnes allerede`; $("confirm").hidden = false; return; }
+  run(s, files);
+});
+$("cNo").onclick = () => $("confirm").hidden = true;
+$("cYes").onclick = () => { $("confirm").hidden = true; const s = S(); run(s, planned(s)); };
+async function run(s, files) {
+  busy = true; $("exportBtn").disabled = true;
+  if (APP) {
+    $("exportLbl").textContent = `Eksporterer 0 av ${files.length}`;
+    const res = await api().export(s);
+    busy = false; $("exportLbl").textContent = "Eksporter"; $("fill").style.width = "0"; update();
+    if (!res.ok) return toast(res.error);
+    lastResult = { s, files, folders: res.folders }; return openSheet(0);
+  }
+  const t0 = performance.now(), dur = Math.min(1600, 300 + files.length * 40);
+  const tick = now => {
+    const p = Math.min(1, (now - t0) / dur), i = Math.max(1, Math.ceil(p * files.length));
+    $("fill").style.width = p * 100 + "%"; $("exportLbl").textContent = `Eksporterer ${i} av ${files.length}`;
+    if (p < 1) requestAnimationFrame(tick); else finish(s, files);
+  };
+  requestAnimationFrame(tick);
+}
+function finish(s, files) {
+  files.forEach(f => exported.add(f.folder + "/" + f.file));
+  busy = false; $("exportLbl").textContent = "Eksporter"; $("fill").style.width = "0"; update();
+  lastResult = { s, files }; openSheet(0);
+}
+function openSheet(idx) {
+  const { s, files } = lastResult, folders = [...new Set(files.map(f => f.folder))];
+  $("sheetTitle").textContent = `${files.length} filer eksportert`;
+  $("tabs").innerHTML = folders.map((f, i) => { const x = files.find(q => q.folder === f); return `<button type="button" class="tab" role="tab" aria-selected="${i === idx}" data-i="${i}">${x.d === 1 ? "1:1" : "1/" + x.d} · ${x.tw}×${x.th}</button>`; }).join("");
+  $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => openSheet(+b.dataset.i));
+  const folder = folders[idx], list = files.filter(f => f.folder === folder);
+  const W = src.W, H = src.H, [btw, bth] = baseTile(W, H, s);
+  const full = document.createElement("canvas"), sc = Math.min(1, 2400 / Math.max(btw * s.tx, bth * s.ty));
+  full.width = Math.round(btw * s.tx * sc); full.height = Math.round(bth * s.ty * sc);
+  const g = full.getContext("2d");
+  if (s.fit === "stretch") g.drawImage(src, 0, 0, full.width, full.height); else g.drawImage(src, 0, full.height - H * sc, W * sc, H * sc);
+  const body = $("sheetBody");
+  const realFolder = (lastResult.folders || []).find(p => p.endsWith(folder));
+  body.innerHTML = `<div class="folder-path">${esc(s.out)}\\<b>${esc(folder)}</b>\\</div>${realFolder ? `<button type="button" class="openf" id="openF">Åpne mappen</button><div style="height:12px"></div>` : ""}<div class="tiles" style="grid-template-columns:repeat(${s.tx},minmax(0,1fr))"></div><p class="sheet-note">${APP ? "" : "Simulert eksport. "}Rekkefølgen følger UDIM-rutenettet, med 1001 nede til venstre. Eksporter på nytt med samme valg for å se varselet om overskriving.</p>`;
+  const host = body.querySelector(".tiles"), tW = btw * sc, tH = bth * sc;
+  list.sort((a, b) => b.v - a.v || a.u - b.u).forEach(f => {
+    const el = document.createElement("div"); el.className = "tile";
+    const c = document.createElement("canvas"), kk = 220 / Math.max(tW, tH);
+    c.width = Math.max(1, Math.round(tW * kk)); c.height = Math.max(1, Math.round(tH * kk));
+    const cg = c.getContext("2d"); cg.drawImage(full, f.u * tW, full.height - (f.v + 1) * tH, tW, tH, 0, 0, c.width, c.height);
+    if (s.ch === "BW") { const id = cg.getImageData(0, 0, c.width, c.height), p = id.data; for (let q = 0; q < p.length; q += 4) p[q] = p[q + 1] = p[q + 2] = .2126 * p[q] + .7152 * p[q + 1] + .0722 * p[q + 2]; cg.putImageData(id, 0, 0); }
+    const lab = document.createElement("span"); lab.innerHTML = `<b>${udim(f.u, f.v)}</b> ${esc(f.file)}`; lab.title = f.file;
+    el.append(c, lab); host.append(el);
+  });
+  if (realFolder) $("openF").onclick = () => api().open_folder(realFolder);
+  $("sheet").classList.add("open"); $("sheetBg").classList.add("open");
+}
+function closeSheet() { $("sheet").classList.remove("open"); $("sheetBg").classList.remove("open"); }
+$("sheetX").onclick = closeSheet; $("sheetBg").onclick = closeSheet;
+
+// ---------- Innlasting ----------
+function loadNative(r) {
+  if (!r) return;
+  if (!r.ok) return toast(r.error);
+  const img = new Image();
+  img.onload = () => { realLoaded = true; setSource(img, r.name, r.label, r.width, r.height); };
+  img.src = r.preview;
+}
+window.onNativeImage = loadNative;
+window.onExportProgress = (d, t, m) => { $("fill").style.width = d / t * 100 + "%"; $("exportLbl").textContent = `Eksporterer ${d} av ${t}`; };
+function loadFile(file) {
+  if (!file || !file.type.startsWith("image/")) { $("srcSize").textContent = "bruk PNG eller JPG i prototypen"; return; }
+  const img = new Image();
+  img.onload = () => setSource(img, file.name.replace(/\.[^.]+$/, ""), file.name);
+  img.src = URL.createObjectURL(file);
+}
+$("srcBtn").onclick = async () => APP ? loadNative(await api().open_image()) : $("file").click();
+$("file").onchange = e => loadFile(e.target.files[0]);
+$("pickDir").onclick = async () => {
+  if (!APP) { $("outDir").focus(); $("outDir").select(); return; }
+  const d = await api().choose_folder($("outDir").value);
+  if (d) { $("outDir").value = d; try { localStorage.setItem("outDir", d); } catch {} update(); }
+};
+const view = $("view");
+view.addEventListener("dragover", e => { e.preventDefault(); view.classList.add("over"); });
+view.addEventListener("dragleave", () => view.classList.remove("over"));
+view.addEventListener("drop", e => { e.preventDefault(); view.classList.remove("over"); if (!APP) loadFile(e.dataTransfer.files[0]); });
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => e.preventDefault());
+
+$("form").addEventListener("input", update);
+$("form").addEventListener("change", update);
+new ResizeObserver(() => { segs().forEach(placeThumb); kick(); }).observe(document.body);
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", kick);
+new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+document.fonts?.ready.then(() => { segs().forEach(placeThumb); kick(); });
+
+// ---------- App-modus (pywebview) ----------
+let APP = false, realLoaded = false;
+const api = () => window.pywebview.api;
+let toastT;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 6000); }
+function initApp() {
+  if (APP || !window.pywebview?.api?.info) return;
+  APP = true;
+  $("protoNote").hidden = true;
+  try { const d = localStorage.getItem("outDir"); if (d) { $("outDir").value = d; } } catch {}
+  $("outDir").addEventListener("change", () => { try { localStorage.setItem("outDir", $("outDir").value); } catch {} });
+  api().info().then(i => { $("verLbl").textContent = i.version === "dev" ? "dev" : "v" + i.version; });
+  update();
+  setTimeout(() => checkUpdate(true), 1500);
+}
+window.addEventListener("pywebviewready", initApp);
+
+// ---------- Oppdatering ----------
+let updInfo = null;
+async function checkUpdate(quiet) {
+  const b = $("updBtn");
+  if (!APP) { showUpd({ state: "dev", message: "Oppdatering finnes bare i den installerte appen." }); return; }
+  b.classList.add("spin");
+  const r = await api().check_update();
+  b.classList.remove("spin");
+  updInfo = r;
+  b.classList.toggle("has", r.state === "available");
+  if (!quiet || r.state === "available") showUpd(r);
+}
+function showUpd(r) {
+  const titles = { uptodate: "Du er oppdatert", available: "Ny versjon klar", building: "Ny versjon bygges", error: "Kunne ikke sjekke", dev: "Utviklerversjon" };
+  $("updTitle").textContent = titles[r.state] || "Oppdatering";
+  $("updDot").className = "upd-dot " + ({ uptodate: "ok", available: "new", building: "new", error: "err" }[r.state] || "");
+  $("updMsg").textContent = r.message || "";
+  $("updChanges").innerHTML = (r.changes || []).map(c => `<li>${esc(c)}</li>`).join("");
+  $("updMeta").textContent = r.currentCommit ? `din versjon ${r.currentCommit} · main ${r.mainCommit}` : "";
+  $("updGo").hidden = r.state !== "available";
+  $("updPop").hidden = false;
+}
+$("updBtn").onclick = e => { e.stopPropagation(); if (!$("updPop").hidden) { $("updPop").hidden = true; return; } showUpd({ state: "", message: "Sjekker GitHub…" }); checkUpdate(false); };
+$("updPop").onclick = e => e.stopPropagation();
+document.addEventListener("click", () => { if (!$("updGo").disabled) $("updPop").hidden = true; });
+window.onUpdateProgress = p => { $("updFill").style.width = p * 100 + "%"; $("updGoLbl").textContent = `Laster ned ${Math.round(p * 100)} %`; };
+$("updGo").onclick = async () => {
+  $("updGo").disabled = true; $("updGoLbl").textContent = "Laster ned…";
+  const r = await api().install_update(updInfo.url);
+  if (r.ok) $("updGoLbl").textContent = "Installerer, appen starter på nytt…";
+  else { $("updGo").disabled = false; $("updGoLbl").textContent = "Prøv igjen"; $("updMsg").textContent = r.error; }
+};
+
+setSource(makeSample(), "Rock_Wall", "Eksempelbilde");
+if (window.pywebview?.api?.info) initApp();
+</script>
