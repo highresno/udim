@@ -430,8 +430,8 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
         <div class="field"><span class="lbl">File names</span>
           <div class="seg" id="sepSeg">
             <span class="thumb"></span>
-            <label><input type="radio" name="sep" value="_" checked>Name_1001</label>
-            <label><input type="radio" name="sep" value=".">Name.1001</label>
+            <label><input type="radio" name="sep" value="_" checked>Name_1024x1024_1001</label>
+            <label><input type="radio" name="sep" value=".">Name_1024x1024.1001</label>
           </div></div>
         <details class="adv">
           <summary><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Advanced</summary>
@@ -559,7 +559,7 @@ const tileSize = (w, h, s, d) => baseTile(w, h, s).map(n => Math.max(1, Math.rou
 const levelCodecs = ["zip", "zips", "dwaa", "dwab"];
 const compTag = s => s.fmt === "PNG" ? s.comp + "%" : s.fmt === "JPG" ? "q" + Math.max(1, s.comp) : levelCodecs.includes(s.codec) ? `${s.codec}_${s.comp}%` : s.codec;
 const folderName = (s, tw, th) => `${s.name}_${s.fmt}_${s.ch}_${{ "8": "8bit", "16": "16bit", half: "half", float: "float" }[s.depth]}_${compTag(s)}_${tw}_${th}`;
-const fileName = (s, n) => `${s.name}${s.sep}${n}.${s.fmt.toLowerCase()}`;
+const fileName = (s, n, tw, th) => `${s.name}_${tw}x${th}${s.sep}${n}.${s.fmt.toLowerCase()}`;
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const joinPath = (a, b) => a ? a.replace(/[\\/]+$/, "") + (a.includes("/") && !a.includes("\\") ? "/" : "\\") + b : b;
 function fmtBytes(b) {
@@ -674,7 +674,7 @@ function renderList() {
     let sum = 0;
     const rows = [];
     for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) {
-      const f = fileName(s, udim(u, v)), real = realFolder?.[f], e = est?.[dkey]?.[v * s.tx + u];
+      const f = fileName(s, udim(u, v), a, b), real = realFolder?.[f], e = est?.[dkey]?.[v * s.tx + u];
       const bytes = real ?? e; if (bytes == null) known = false; else sum += bytes;
       nFiles++;
       rows.push(`<div class="frow" data-u="${u}" data-v="${v}"><span class="u">${udim(u, v)}</span><span class="fn" title="${esc(f)}">${esc(f)}</span><span class="sz${real != null ? " real" : ""}">${bytes == null ? '<i class="est"></i>' : (real != null ? "" : "≈ ") + fmtBytes(bytes)}</span></div>`);
@@ -822,7 +822,7 @@ let busy = false;
 function planned(s, d) {
   const out = [];
   for (const dv of s.scales) { const [tw, th] = tileSize(d.W, d.H, s, dv), folder = folderName(s, tw, th);
-    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) out.push({ folder, file: fileName(s, udim(u, v)) }); }
+    for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) out.push({ folder, file: fileName(s, udim(u, v), tw, th) }); }
   return out;
 }
 $("form").addEventListener("submit", async e => {
@@ -851,7 +851,7 @@ async function run(s, files) {
       requestAnimationFrame(tick); });
     const est = d.est?.sizes || roughSizes(s, d), folders = {}, paths = {};
     for (const dv of s.scales) { const [a, b] = tileSize(d.W, d.H, s, dv), name = folderName(s, a, b); folders[name] = {}; paths[name] = joinPath(s.out, name);
-      for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) folders[name][fileName(s, udim(u, v))] = est[dv][v * s.tx + u]; }
+      for (let v = 0; v < s.ty; v++) for (let u = 0; u < s.tx; u++) folders[name][fileName(s, udim(u, v), a, b)] = est[dv][v * s.tx + u]; }
     result = { folders, paths };
   }
   files.forEach(f => d.exported.add(f.folder + "/" + f.file));

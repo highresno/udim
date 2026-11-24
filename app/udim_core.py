@@ -140,16 +140,17 @@ def folder_name(s: ExportSettings, tw: int, th: int) -> str:
     return f"{s.name}_{s.fmt}_{s.channels}_{depth}_{describe_compression(s)}_{tw}_{th}"
 
 
-def file_name(s: ExportSettings, udim: int) -> str:
-    return f"{s.name}{s.separator}{udim}.{ext_for(s.fmt)}"
+def file_name(s: ExportSettings, udim: int, tw: int, th: int) -> str:
+    """Navn_2048x2048_1001.png (eller Navn_2048x2048.1001.png)."""
+    return f"{s.name}_{tw}x{th}{s.separator}{udim}.{ext_for(s.fmt)}"
 
 
 def planned_outputs(src_w: int, src_h: int, s: ExportSettings) -> list[tuple[str, list[str]]]:
     """Liste av (mappe, [filer]) som eksporten vil lage."""
     out = []
-    files = [file_name(s, udim_number(u, v)) for v in range(s.tiles_y) for u in range(s.tiles_x)]
     for d in s.scales:
         tw, th = tile_size(src_w, src_h, s, d)
+        files = [file_name(s, udim_number(u, v), tw, th) for v in range(s.tiles_y) for u in range(s.tiles_x)]
         out.append((os.path.join(s.out_root, folder_name(s, tw, th)), files))
     return out
 
@@ -292,7 +293,7 @@ def export(src: SourceImage, s: ExportSettings, progress=None, cancelled=None) -
                     return folders
                 y1 = H - v * th          # v teller fra bunnen
                 tile = scaled[y1 - th:y1, u * tw:(u + 1) * tw]
-                fname = file_name(s, udim_number(u, v))
+                fname = file_name(s, udim_number(u, v), tw, th)
                 write_tile(os.path.join(folder, fname), tile, s)
                 done += 1
                 if progress:
