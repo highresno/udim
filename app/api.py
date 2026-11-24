@@ -18,7 +18,7 @@ import udim_core as core
 import updater
 from build_info import COMMIT, VERSION
 
-IMAGE_TYPES = ("Bilder (*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.exr;*.tga;*.bmp;*.psd;*.hdr)", "Alle filer (*.*)")
+IMAGE_TYPES = ("Images (*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.exr;*.tga;*.bmp;*.psd;*.hdr)", "All files (*.*)")
 PREVIEW_MAX = 1800
 
 
@@ -103,7 +103,7 @@ class Api:
                     "width": src.width, "height": src.height, "channels": src.channels,
                     "linear": src.is_linear, "preview": make_preview(src)}
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"Kunne ikke åpne {os.path.basename(path)}: {e}"}
+            return {"ok": False, "error": f"Could not open {os.path.basename(path)}: {e}"}
 
     def push_dropped(self, path: str):
         """Kalles fra Python når en fil slippes i vinduet."""
@@ -136,10 +136,10 @@ class Api:
 
     def export(self, settings: dict):
         if not self._src:
-            return {"ok": False, "error": "Åpne et bilde først."}
+            return {"ok": False, "error": "Import an image first."}
         s = to_settings(settings)
         if not s.out_root:
-            return {"ok": False, "error": "Velg en mappe å eksportere til."}
+            return {"ok": False, "error": "Choose an output folder."}
         try:
             folders = core.export(self._src, s, progress=lambda d, t, m: self._js("window.onExportProgress", d, t, m))
             return {"ok": True, "folders": folders}

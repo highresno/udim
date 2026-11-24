@@ -3,27 +3,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: fullskjerms verktøy. Visningen fyller venstre side med flytende kontroller for X×Y; et rolig sidepanel til høyre; eksportknapp alltid synlig nederst. Mørk-først, som 3D-programmer. */
+/* Layout: full-window tool. Start screen with one import drop zone; then a large preview with floating X×Y controls, a calm settings panel on the right and an always-visible export button. Light theme only. */
 :root {
-  --bg: #0f1115; --surface: #161920; --raised: #1d212a; --hover: #252a35; --line: #2a2f3a;
-  --fg: #e9ebf0; --muted: #8b93a3; --faint: #5d6474;
-  --accent: #7aa2ff; --accent-soft: rgba(122,162,255,.14); --accent-fg: #0b1020;
-  --pad: rgba(255,110,110,.20); --ok: #5fd39a;
+  --bg: #eef0f4; --surface: #ffffff; --raised: #f3f5f9; --hover: #e7eaf1; --line: #dde1e9;
+  --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
+  --accent: #3d6cf0; --accent-soft: rgba(61,108,240,.10); --accent-fg: #ffffff;
+  --pad: rgba(230,70,70,.16); --ok: #16935a; --warn: #c2412d;
+  --shadow: 0 12px 40px rgba(20,28,48,.14);
   --font: "Manrope", system-ui, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
-  color-scheme: dark;
+  color-scheme: light;
 }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --bg: #e9ecf2; --surface: #ffffff; --raised: #f3f5f9; --hover: #e8ebf2; --line: #dde1e9;
-  --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
-  --accent: #3d6cf0; --accent-soft: rgba(61,108,240,.10); --accent-fg: #ffffff;
-  --pad: rgba(230,70,70,.16); --ok: #16935a; color-scheme: light; } }
-:root[data-theme="light"] {
-  --bg: #e9ecf2; --surface: #ffffff; --raised: #f3f5f9; --hover: #e8ebf2; --line: #dde1e9;
-  --fg: #151821; --muted: #5d6576; --faint: #9aa1ae;
-  --accent: #3d6cf0; --accent-soft: rgba(61,108,240,.10); --accent-fg: #ffffff;
-  --pad: rgba(230,70,70,.16); --ok: #16935a; color-scheme: light; }
-
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
@@ -38,7 +28,7 @@ button { cursor: pointer; }
 @media (max-width: 920px) { .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 56vh auto; height: auto; } }
 
 /* ---------- Toppfelt ---------- */
-.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.top { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; padding-right: 110px; min-height: 42px; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; }
 .brand svg { color: var(--accent); }
 .src { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 14px 5px 5px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; transition: border-color .15s; }
@@ -61,10 +51,10 @@ button { cursor: pointer; }
 .pill { background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
 .pill b { color: var(--fg); font-weight: 500; }
-.pill.warn b { color: #ff9a8a; }
+.pill.warn b { color: var(--warn); }
 
 .dims { display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 16px; background: color-mix(in srgb, var(--surface) 86%, transparent);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .stepper { display: flex; align-items: center; gap: 2px; }
 .stepper .ax { font: 600 11px var(--mono); color: var(--muted); width: 18px; text-align: center; }
 .stepper button { width: 30px; height: 30px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); display: grid; place-items: center; transition: background .12s, color .12s; }
@@ -76,7 +66,7 @@ button { cursor: pointer; }
 .gridbtn:hover, .gridbtn[aria-expanded="true"] { background: var(--accent); color: var(--accent-fg); }
 
 .picker { position: absolute; bottom: 74px; left: 50%; transform: translateX(-50%) translateY(6px); opacity: 0; pointer-events: none;
-  transition: opacity .16s, transform .16s; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 16px 50px rgba(0,0,0,.45); }
+  transition: opacity .16s, transform .16s; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .picker.open { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
 .picker-grid { display: grid; grid-template-columns: repeat(10, 18px); gap: 3px; }
 .picker-grid i { width: 18px; height: 18px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line); cursor: pointer; transition: background .06s, border-color .06s; }
@@ -122,7 +112,7 @@ input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; hei
 input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--p), var(--hover) var(--p)); }
 input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--hover); }
 input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); transition: box-shadow .15s, transform .15s; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: #fff; border: 1px solid var(--line); box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); transition: box-shadow .15s, transform .15s; }
 input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); }
 input[type=range]:active::-webkit-slider-thumb { transform: scale(1.12); box-shadow: 0 0 0 7px var(--accent-soft), 0 2px 6px rgba(0,0,0,.4); }
 input[type=range]:disabled { opacity: .35; cursor: default; }
@@ -167,9 +157,9 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .confirm button.yes { background: var(--accent); color: var(--accent-fg); }
 
 /* ---------- Resultatark ---------- */
-.sheet-bg { position: fixed; inset: 0; background: rgba(5,7,12,.55); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+.sheet-bg { position: fixed; inset: 0; background: rgba(20,24,34,.28); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
 .sheet { position: fixed; z-index: 21; right: max(12px, env(safe-area-inset-right, 0px)); top: max(12px, env(safe-area-inset-top, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  width: min(560px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  width: min(560px, calc(100% - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow);
   display: grid; grid-template-rows: auto auto minmax(0, 1fr); transform: translateX(calc(100% + 30px)); visibility: hidden; transition: transform .28s cubic-bezier(.3,.7,.2,1), visibility 0s .28s; }
 .sheet.open { transform: none; visibility: visible; transition: transform .28s cubic-bezier(.3,.7,.2,1); }
 .sheet-bg.open { opacity: 1; pointer-events: auto; }
@@ -192,16 +182,16 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .tile span b { color: var(--accent); font-weight: 500; }
 .sheet-note { font-size: 12px; color: var(--faint); margin: 14px 0 0; }
 
-.upd-wrap { position: relative; }
+.upd-wrap { position: fixed; z-index: 60; top: max(14px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }
 .upd { display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 7px 13px; font-size: 12px; font-weight: 600; transition: border-color .15s, color .15s; }
 .upd:hover { border-color: var(--accent); color: var(--fg); }
 .upd.spin svg { animation: spin .9s linear infinite; }
 .upd.has { color: var(--accent); border-color: var(--accent); }
 @keyframes spin { to { transform: rotate(360deg); } }
-.upd-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 320px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45); display: grid; gap: 8px; }
+.upd-pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 320px; max-width: calc(100vw - 32px); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); display: grid; gap: 8px; }
 .upd-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .upd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
-.upd-dot.ok { background: var(--ok); } .upd-dot.new { background: var(--accent); } .upd-dot.err { background: #ff8a7a; }
+.upd-dot.ok { background: var(--ok); } .upd-dot.new { background: var(--accent); } .upd-dot.err { background: var(--warn); }
 .upd-pop p { margin: 0; font-size: 13px; color: var(--muted); }
 .upd-pop ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--fg); display: grid; gap: 3px; max-height: 160px; overflow: auto; }
 .upd-pop ul:empty { display: none; }
@@ -211,42 +201,72 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
 .upd-go span { position: relative; }
 .openf { border: 0; border-radius: 9px; padding: 7px 12px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
 .openf:hover { background: var(--accent); color: var(--accent-fg); }
-.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 40; background: var(--surface); border: 1px solid #ff8a7a; color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 13px; box-shadow: 0 12px 40px rgba(0,0,0,.4); max-width: calc(100% - 32px); }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 40; background: var(--surface); border: 1px solid var(--warn); color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 13px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.start { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bg);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; }
+.start-brand { position: absolute; top: max(18px, env(safe-area-inset-top, 0px)); left: max(20px, env(safe-area-inset-left, 0px)); }
+.drop { width: min(560px, 100%); aspect-ratio: 4 / 3; max-height: 70vh; border: 2px dashed var(--line); border-radius: 22px; background: var(--surface);
+  display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; padding: 32px; transition: border-color .15s, background .15s, transform .15s; box-shadow: var(--shadow); }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); transform: scale(1.01); }
+.drop .ico { width: 64px; height: 64px; border-radius: 18px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+.drop h1 { margin: 4px 0 0; font-size: 22px; letter-spacing: -.01em; text-wrap: balance; }
+.drop p { margin: 0; color: var(--muted); font-size: 14px; }
+.drop .formats { font: 11px var(--mono); color: var(--faint); }
+.import { border: 0; border-radius: 12px; padding: 12px 22px; background: var(--accent); color: var(--accent-fg); font-weight: 700; font-size: 15px; transition: filter .15s, transform .08s; }
+.import:hover { filter: brightness(1.08); }
+.import:active { transform: scale(.98); }
+.drop .err { color: var(--warn); font-size: 13px; min-height: 1.2em; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 </style>
 
-<div class="app">
+<div class="start" id="start">
+  <div class="brand start-brand">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="11" width="8" height="8" rx="2" fill="currentColor"/><rect x="11" y="11" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+      UDIM Tiler
+    </div>
+  <div class="drop" id="startDrop">
+    <div class="ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
+    <h1>Import an image to split into UDIM tiles</h1>
+    <p>Drag and drop an image here, or</p>
+    <button type="button" class="import" id="importBtn">Import image</button>
+    <span class="formats" id="formats">EXR · TIFF · PNG · JPG · PSD · TGA · HDR</span>
+    <span class="err" id="startErr"></span>
+  </div>
+</div>
+
+    <div class="upd-wrap" id="updWrap">
+      <button type="button" class="upd" id="updBtn" title="Check GitHub for updates"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="verLbl">Update</span></button>
+      <div class="upd-pop" id="updPop" hidden>
+        <div class="upd-head"><span class="upd-dot" id="updDot"></span><b id="updTitle">Checking…</b></div>
+        <p id="updMsg"></p>
+        <ul id="updChanges"></ul>
+        <div class="upd-meta" id="updMeta"></div>
+        <button type="button" class="upd-go" id="updGo" hidden><i class="fill" id="updFill"></i><span id="updGoLbl">Update now</span></button>
+      </div>
+    </div>
+
+<div class="app" id="app" hidden>
   <div class="top">
     <div class="brand">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="1" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="1" y="11" width="8" height="8" rx="2" fill="currentColor"/><rect x="11" y="11" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
       UDIM Tiler
     </div>
-    <button class="src" id="srcBtn" type="button" title="Åpne et annet bilde, eller dra det inn i visningen">
+    <button class="src" id="srcBtn" type="button" title="Open another image, or drop one onto the preview">
       <canvas id="srcThumb" width="60" height="60"></canvas>
-      <span class="meta"><b id="srcName">Eksempelbilde</b><span id="srcSize"></span></span>
+      <span class="meta"><b id="srcName"></b><span id="srcSize"></span></span>
     </button>
     <input type="file" id="file" accept="image/*" hidden>
     <div class="spacer"></div>
-    <span class="proto" id="protoNote">Nettleserversjon · eksporten er simulert</span>
-    <div class="upd-wrap">
-      <button type="button" class="upd" id="updBtn" title="Se etter oppdatering på GitHub"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="verLbl">Oppdater</span></button>
-      <div class="upd-pop" id="updPop" hidden>
-        <div class="upd-head"><span class="upd-dot" id="updDot"></span><b id="updTitle">Sjekker…</b></div>
-        <p id="updMsg"></p>
-        <ul id="updChanges"></ul>
-        <div class="upd-meta" id="updMeta"></div>
-        <button type="button" class="upd-go" id="updGo" hidden><i class="fill" id="updFill"></i><span id="updGoLbl">Oppdater nå</span></button>
-      </div>
-    </div>
+    <span class="proto" id="protoNote">Browser preview · export is simulated</span>
   </div>
 
   <main class="view" id="view">
-    <canvas id="cv" aria-label="Forhåndsvisning med UDIM-rutenett"></canvas>
+    <canvas id="cv" aria-label="Preview with UDIM grid"></canvas>
     <div class="hud hud-tl">
       <span class="pill">tile <b id="hTile">–</b></span>
       <span class="pill" id="hFit"></span>
     </div>
-    <div class="picker" id="picker" role="dialog" aria-label="Velg antall tiles">
+    <div class="picker" id="picker" role="dialog" aria-label="Choose tile count">
       <div class="picker-grid" id="pickerGrid"></div>
       <div class="picker-cap" id="pickerCap"></div>
     </div>
@@ -254,18 +274,18 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
       <div class="dims">
         <div class="stepper" data-axis="x">
           <span class="ax">X</span>
-          <button type="button" data-d="-1" aria-label="Færre tiles i X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-          <output id="txOut" title="Dra opp eller ned, eller rull, for å endre">3</output>
-          <button type="button" data-d="1" aria-label="Flere tiles i X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <button type="button" data-d="-1" aria-label="Fewer tiles in X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <output id="txOut" title="Drag up or down, or scroll, to change">3</output>
+          <button type="button" data-d="1" aria-label="More tiles in X"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         </div>
         <span class="times">×</span>
         <div class="stepper" data-axis="y">
           <span class="ax">Y</span>
-          <button type="button" data-d="-1" aria-label="Færre tiles i Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-          <output id="tyOut" title="Dra opp eller ned, eller rull, for å endre">2</output>
-          <button type="button" data-d="1" aria-label="Flere tiles i Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <button type="button" data-d="-1" aria-label="Fewer tiles in Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          <output id="tyOut" title="Drag up or down, or scroll, to change">2</output>
+          <button type="button" data-d="1" aria-label="More tiles in Y"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
         </div>
-        <button type="button" class="gridbtn" id="gridBtn" aria-expanded="false" aria-label="Velg antall i rutenett">
+        <button type="button" class="gridbtn" id="gridBtn" aria-expanded="false" aria-label="Pick tile count on a grid">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="4" height="4" rx="1"/><rect x="6" y="1" width="4" height="4" rx="1"/><rect x="11" y="1" width="4" height="4" rx="1"/><rect x="1" y="6" width="4" height="4" rx="1"/><rect x="6" y="6" width="4" height="4" rx="1"/><rect x="11" y="6" width="4" height="4" rx="1"/><rect x="1" y="11" width="4" height="4" rx="1"/><rect x="6" y="11" width="4" height="4" rx="1"/><rect x="11" y="11" width="4" height="4" rx="1"/></svg>
         </button>
       </div>
@@ -275,19 +295,19 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
   <form class="side" id="form" autocomplete="off">
     <div class="scroll">
       <section class="sec">
-        <h3>Navn og deling</h3>
-        <div class="field"><label for="name">Navn</label><input class="text" type="text" id="name" value="Rock_Wall"></div>
-        <div class="field"><span class="lbl">Hvis bildet ikke går opp</span>
+        <h3>Name and split</h3>
+        <div class="field"><label for="name">Name</label><input class="text" type="text" id="name" value="" placeholder="Texture name"></div>
+        <div class="field"><span class="lbl">If the image does not divide evenly</span>
           <div class="seg" id="fitSeg">
             <span class="thumb"></span>
-            <label><input type="radio" name="fit" value="pad" checked>Fyll ut</label>
-            <label><input type="radio" name="fit" value="crop">Beskjær</label>
-            <label><input type="radio" name="fit" value="stretch">Strekk</label>
+            <label><input type="radio" name="fit" value="pad" checked>Pad</label>
+            <label><input type="radio" name="fit" value="crop">Crop</label>
+            <label><input type="radio" name="fit" value="stretch">Stretch</label>
           </div></div>
       </section>
 
       <section class="sec">
-        <h3>Oppløsning <small>velg én eller flere</small></h3>
+        <h3>Resolution <small>pick one or more</small></h3>
         <div class="chips" id="scales">
           <label class="chip"><input type="checkbox" value="1" id="s1" checked><b>1:1</b><span></span></label>
           <label class="chip"><input type="checkbox" value="2" id="s2" checked><b>1/2</b><span></span></label>
@@ -313,43 +333,43 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
         <div class="seg" id="depthSeg"></div>
         <div class="field" id="codecField"><label for="codec">Codec</label>
           <select class="sel" id="codec">
-            <option value="zip">ZIP · tapsfri, god allround</option>
-            <option value="zips">ZIPS · tapsfri, per linje</option>
-            <option value="piz">PIZ · tapsfri, god på støy</option>
-            <option value="dwaa">DWAA · med tap, små filer</option>
-            <option value="dwab">DWAB · med tap, store blokker</option>
-            <option value="pxr24">PXR24 · med tap på float</option>
-            <option value="b44">B44 · med tap, rask</option>
-            <option value="b44a">B44A · med tap, rask</option>
-            <option value="rle">RLE · tapsfri, enkel</option>
-            <option value="none">Ingen komprimering</option>
+            <option value="zip">ZIP · lossless, good all-round</option>
+            <option value="zips">ZIPS · lossless, per scanline</option>
+            <option value="piz">PIZ · lossless, good for noisy images</option>
+            <option value="dwaa">DWAA · lossy, small files</option>
+            <option value="dwab">DWAB · lossy, large blocks</option>
+            <option value="pxr24">PXR24 · lossy for float</option>
+            <option value="b44">B44 · lossy, fast</option>
+            <option value="b44a">B44A · lossy, fast</option>
+            <option value="rle">RLE · lossless, simple</option>
+            <option value="none">No compression</option>
           </select></div>
         <div class="range">
-          <div class="range-top"><span class="lbl" id="compLabel">Komprimering</span><output id="compOut" for="comp"></output></div>
+          <div class="range-top"><span class="lbl" id="compLabel">Compression</span><output id="compOut" for="comp"></output></div>
           <input type="range" id="comp" min="0" max="100" value="50" aria-labelledby="compLabel">
           <div class="ticks" id="ticks"></div>
         </div>
       </section>
 
       <section class="sec">
-        <h3>Utdata</h3>
-        <div class="field"><label for="outDir">Mappe</label>
-          <div class="withbtn"><input class="text" type="text" id="outDir" value="D:\Teksturer\Eksport"><button type="button" class="ghost" id="pickDir">Velg</button></div></div>
-        <div class="field"><span class="lbl">Filnavn</span>
+        <h3>Output</h3>
+        <div class="field"><label for="outDir">Folder</label>
+          <div class="withbtn"><input class="text" type="text" id="outDir" value="" placeholder="Choose an output folder"><button type="button" class="ghost" id="pickDir">Browse</button></div></div>
+        <div class="field"><span class="lbl">File names</span>
           <div class="seg" id="sepSeg">
             <span class="thumb"></span>
-            <label><input type="radio" name="sep" value="_" checked>Navn_1001</label>
-            <label><input type="radio" name="sep" value=".">Navn.1001</label>
+            <label><input type="radio" name="sep" value="_" checked>Name_1001</label>
+            <label><input type="radio" name="sep" value=".">Name.1001</label>
           </div></div>
         <div class="path" id="path"></div>
         <details class="adv">
-          <summary><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Avansert</summary>
+          <summary><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Advanced</summary>
           <div class="inner">
-            <label class="toggle">Konverter fargerom <input type="checkbox" id="convert" checked></label>
-            <p class="lbl" style="margin:-6px 0 0">EXR lagres lineært, PNG og JPG som sRGB.</p>
-            <div class="field"><label for="space">Kildens fargerom</label>
-              <select class="sel" id="space"><option value="auto">Automatisk (EXR/HDR = lineær)</option><option value="srgb">sRGB</option><option value="linear">Lineær</option></select></div>
-            <div class="field"><label for="filter">Skaleringsfilter</label>
+            <label class="toggle">Convert color space <input type="checkbox" id="convert" checked></label>
+            <p class="lbl" style="margin:-6px 0 0">EXR is saved as linear, PNG and JPG as sRGB.</p>
+            <div class="field"><label for="space">Source color space</label>
+              <select class="sel" id="space"><option value="auto">Automatic (EXR/HDR = linear)</option><option value="srgb">sRGB</option><option value="linear">Linear</option></select></div>
+            <div class="field"><label for="filter">Resize filter</label>
               <select class="sel" id="filter"><option>Lanczos</option><option>Bilinear</option><option>Box</option></select></div>
           </div>
         </details>
@@ -357,17 +377,17 @@ details.adv .inner { display: grid; gap: 12px; padding-top: 12px; }
     </div>
 
     <div class="foot">
-      <div class="confirm" id="confirm" hidden><span id="confirmText"></span><button type="button" id="cNo">Avbryt</button><button type="button" class="yes" id="cYes">Overskriv</button></div>
+      <div class="confirm" id="confirm" hidden><span id="confirmText"></span><button type="button" id="cNo">Cancel</button><button type="button" class="yes" id="cYes">Overwrite</button></div>
       <div class="summary"><span id="sumL"></span><span id="sumR"></span></div>
-      <button type="submit" class="export" id="exportBtn"><i class="fill" id="fill"></i><span id="exportLbl">Eksporter</span></button>
+      <button type="submit" class="export" id="exportBtn"><i class="fill" id="fill"></i><span id="exportLbl">Export</span></button>
     </div>
   </form>
 </div>
 
 <div class="toast" id="toast" hidden></div>
 <div class="sheet-bg" id="sheetBg"></div>
-<aside class="sheet" id="sheet" aria-label="Eksportresultat">
-  <header><h2><span class="dot"></span><span id="sheetTitle">Eksportert</span></h2><button type="button" class="x" id="sheetX" aria-label="Lukk"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></header>
+<aside class="sheet" id="sheet" aria-label="Export result">
+  <header><h2><span class="dot"></span><span id="sheetTitle">Exported</span></h2><button type="button" class="x" id="sheetX" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></header>
   <div class="tabs" id="tabs" role="tablist"></div>
   <div class="sheet-body" id="sheetBody"></div>
 </aside>
@@ -381,24 +401,6 @@ const state = { tx: 3, ty: 2 };
 const anim = { tx: 3, ty: 2, k: 0, ox: 0, oy: 0 };
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------- Eksempelbilde ----------
-function makeSample() {
-  const c = document.createElement("canvas"); c.width = 4000; c.height = 1850;
-  const g = c.getContext("2d");
-  const grd = g.createLinearGradient(0, 0, c.width, c.height);
-  grd.addColorStop(0, "#56616b"); grd.addColorStop(.5, "#867660"); grd.addColorStop(1, "#4c5746");
-  g.fillStyle = grd; g.fillRect(0, 0, c.width, c.height);
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const bh = 180;
-  for (let y = 0, r = 0; y < c.height; y += bh, r++) for (let x = -(r % 2) * 160; x < c.width;) {
-    const w = 240 + rnd() * 160;
-    g.fillStyle = `hsl(${22 + rnd() * 22} ${10 + rnd() * 18}% ${28 + rnd() * 34}%)`;
-    g.beginPath(); g.roundRect(x + 8, y + 8, w - 16, bh - 16, 18); g.fill();
-    g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(x + 14, y + 12, w - 28, 10);
-    x += w;
-  }
-  return c;
-}
 function setSource(img, name, label, realW, realH) {
   src = img;
   const W = realW || img.naturalWidth || img.width, H = realH || img.naturalHeight || img.height;
@@ -409,7 +411,9 @@ function setSource(img, name, label, realW, realH) {
   const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, t = $("srcThumb").getContext("2d"), m = Math.min(iw, ih);
   t.clearRect(0, 0, 60, 60); t.drawImage(img, (iw - m) / 2, (ih - m) / 2, m, m, 0, 0, 60, 60);
   $("srcName").textContent = label; $("srcSize").textContent = `${W}×${H}`;
-  $("name").value = name; exported.clear(); anim.k = 0; update();
+  $("name").value = name; exported.clear(); anim.k = 0;
+  $("start").hidden = true; $("app").hidden = false; $("startErr").textContent = "";
+  update();
 }
 
 // ---------- Logikk ----------
@@ -440,7 +444,7 @@ const segs = () => document.querySelectorAll(".seg");
 
 function syncFormat() {
   const fmt = val("fmt"), prev = val("depth");
-  const opts = fmt === "PNG" ? [["8", "8 bit"], ["16", "16 bit"]] : fmt === "EXR" ? [["half", "Half · 16"], ["float", "Full · 32"]] : [];
+  const opts = fmt === "PNG" ? [["8", "8-bit"], ["16", "16-bit"]] : fmt === "EXR" ? [["half", "Half · 16"], ["float", "Full · 32"]] : [];
   const key = opts.map(o => o[0]).join(), ds = $("depthSeg");
   if (ds.dataset.key !== key) {
     ds.dataset.key = key;
@@ -450,21 +454,22 @@ function syncFormat() {
   $("codecField").hidden = fmt !== "EXR";
   $("cRGBA").disabled = fmt === "JPG";
   if (fmt === "JPG" && $("cRGBA").checked) document.querySelector("[name=ch][value=RGB]").checked = true;
-  $("compLabel").textContent = fmt === "JPG" ? "Kvalitet" : "Komprimering";
-  $("ticks").innerHTML = fmt === "JPG" ? "<span>mindre filer</span><span>bedre kvalitet</span>" : "<span>raskere</span><span>mindre filer</span>";
+  $("compLabel").textContent = fmt === "JPG" ? "Quality" : "Compression";
+  $("ticks").innerHTML = fmt === "JPG" ? "<span>smaller files</span><span>better quality</span>" : "<span>faster</span><span>smaller files</span>";
   $("comp").disabled = fmt === "EXR" && !levelCodecs.includes($("codec").value);
 }
 function compText(s) {
   const v = s.comp;
   if (s.fmt === "PNG") return `${v}%  ·  zlib ${Math.round(v / 100 * 9)}`;
   if (s.fmt === "JPG") return `${Math.max(1, v)}`;
-  if (s.codec === "zip" || s.codec === "zips") return `${v}%  ·  nivå ${Math.max(1, Math.round(v / 100 * 9))}`;
+  if (s.codec === "zip" || s.codec === "zips") return `${v}%  ·  level ${Math.max(1, Math.round(v / 100 * 9))}`;
   if (s.codec === "dwaa" || s.codec === "dwab") return `DWA ${Math.max(1, v)}`;
-  return "brukes ikke";
+  return "not used";
 }
 
 // ---------- Oppdatering av panel ----------
 function update() {
+  if (!src) return;
   syncFormat();
   const s = S(), W = src.W, H = src.H, [tw, th] = baseTile(W, H, s);
   $("txOut").textContent = s.tx; $("tyOut").textContent = s.ty;
@@ -480,21 +485,21 @@ function update() {
   });
   $("hTile").textContent = `${tw}×${th}`;
   const cw = tw * s.tx, chh = th * s.ty, hf = $("hFit");
-  if (s.fit === "pad") { const d = cw - W || chh - H; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `utfylling <b>+${cw - W} × +${chh - H} px</b>` : `går opp <b>✓</b>`; }
-  else if (s.fit === "crop") { const d = W - cw || H - chh; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `beskjæres <b>−${W - cw} × −${H - chh} px</b>` : `går opp <b>✓</b>`; }
-  else { hf.className = "pill"; hf.innerHTML = `strekkes til <b>${cw}×${chh}</b>`; }
-  if (!s.scales.length) $("path").textContent = "Velg minst én oppløsning";
+  if (s.fit === "pad") { const d = cw - W || chh - H; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `padding <b>+${cw - W} × +${chh - H} px</b>` : `divides evenly <b>✓</b>`; }
+  else if (s.fit === "crop") { const d = W - cw || H - chh; hf.className = "pill" + (d ? " warn" : ""); hf.innerHTML = d ? `cropped <b>−${W - cw} × −${H - chh} px</b>` : `divides evenly <b>✓</b>`; }
+  else { hf.className = "pill"; hf.innerHTML = `stretched to <b>${cw}×${chh}</b>`; }
+  if (!s.scales.length) $("path").textContent = "Pick at least one resolution";
   else {
-    let o = `${esc(s.out || "(ingen mappe)")}\\\n`;
+    let o = `${esc(s.out || "(no folder chosen)")}\\\n`;
     s.scales.forEach(d => { const [a, b] = tileSize(W, H, s, d); o += `  <span class="f">${esc(folderName(s, a, b))}</span>\\\n`; });
     o += `    <span class="n">${esc(fileName(s, 1001))}</span> … <span class="n">${esc(fileName(s, udim(s.tx - 1, s.ty - 1)))}</span>`;
     $("path").innerHTML = o;
   }
   const n = s.tx * s.ty * s.scales.length;
-  $("sumL").textContent = `${n} filer · ${s.scales.length} mappe${s.scales.length === 1 ? "" : "r"}`;
-  $("sumR").textContent = `${s.fmt} · ${s.ch} · ${s.fmt === "JPG" ? "8 bit" : { "8": "8 bit", "16": "16 bit", half: "half", float: "full" }[s.depth]}`;
+  $("sumL").textContent = `${n} file${n === 1 ? "" : "s"} · ${s.scales.length} folder${s.scales.length === 1 ? "" : "s"}`;
+  $("sumR").textContent = `${s.fmt} · ${s.ch} · ${s.fmt === "JPG" ? "8-bit" : { "8": "8-bit", "16": "16-bit", half: "half", float: "full" }[s.depth]}`;
   if (!busy) $("exportBtn").disabled = !s.scales.length || !s.out || (APP && !realLoaded);
-  $("exportLbl").textContent = busy ? $("exportLbl").textContent : (APP && !realLoaded ? "Åpne et bilde for å eksportere" : "Eksporter");
+  $("exportLbl").textContent = busy ? $("exportLbl").textContent : (!s.out ? "Choose an output folder" : "Export");
   $("confirm").hidden = true;
   segs().forEach(placeThumb);
   kick();
@@ -513,6 +518,7 @@ function target() {
 }
 function frame() {
   raf = 0;
+  if (!src || $("app").hidden) return;
   const T = target(), s = T.s, a = reduce ? 1 : .2;
   if (!anim.k) Object.assign(anim, { k: T.k, ox: T.ox, oy: T.oy, tx: s.tx, ty: s.ty });
   let moving = false;
@@ -532,7 +538,7 @@ function draw(T) {
   const css = getComputedStyle(document.documentElement), acc = css.getPropertyValue("--accent").trim();
   const bottom = oy + eh * k; // alt forankres nede til venstre, der 1001 ligger
   const C = { x: ox, y: bottom - ch * k, w: cw * k, h: ch * k };
-  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+  ctx.save(); ctx.shadowColor = "rgba(20,28,48,.25)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
   ctx.fillStyle = "#000"; ctx.fillRect(C.x, C.y, C.w, C.h); ctx.restore();
   if (s.fit === "stretch") ctx.drawImage(proxy, C.x, C.y, C.w, C.h);
   else {
@@ -542,7 +548,7 @@ function draw(T) {
     }
     ctx.drawImage(proxy, ox, bottom - H * k, W * k, H * k);
     if (s.fit === "crop") {
-      ctx.fillStyle = "rgba(8,10,14,.7)";
+      ctx.fillStyle = "rgba(238,240,244,.78)";
       ctx.fillRect(ox + cw * k, bottom - H * k, (W - cw) * k, H * k);
       ctx.fillRect(ox, bottom - H * k, cw * k, (H - ch) * k);
     }
@@ -618,7 +624,7 @@ $("form").addEventListener("submit", async e => {
   e.preventDefault(); if (busy) return;
   const s = S(), files = planned(s);
   const clash = APP ? await api().count_existing(s) : files.filter(f => exported.has(f.folder + "/" + f.file)).length;
-  if (clash) { $("confirmText").textContent = `${clash} filer finnes allerede`; $("confirm").hidden = false; return; }
+  if (clash) { $("confirmText").textContent = `${clash} file${clash === 1 ? "" : "s"} already exist`; $("confirm").hidden = false; return; }
   run(s, files);
 });
 $("cNo").onclick = () => $("confirm").hidden = true;
@@ -626,7 +632,7 @@ $("cYes").onclick = () => { $("confirm").hidden = true; const s = S(); run(s, pl
 async function run(s, files) {
   busy = true; $("exportBtn").disabled = true;
   if (APP) {
-    $("exportLbl").textContent = `Eksporterer 0 av ${files.length}`;
+    $("exportLbl").textContent = `Exporting 0 of ${files.length}`;
     const res = await api().export(s);
     busy = false; $("exportLbl").textContent = "Eksporter"; $("fill").style.width = "0"; update();
     if (!res.ok) return toast(res.error);
@@ -635,7 +641,7 @@ async function run(s, files) {
   const t0 = performance.now(), dur = Math.min(1600, 300 + files.length * 40);
   const tick = now => {
     const p = Math.min(1, (now - t0) / dur), i = Math.max(1, Math.ceil(p * files.length));
-    $("fill").style.width = p * 100 + "%"; $("exportLbl").textContent = `Eksporterer ${i} av ${files.length}`;
+    $("fill").style.width = p * 100 + "%"; $("exportLbl").textContent = `Exporting ${i} of ${files.length}`;
     if (p < 1) requestAnimationFrame(tick); else finish(s, files);
   };
   requestAnimationFrame(tick);
@@ -647,7 +653,7 @@ function finish(s, files) {
 }
 function openSheet(idx) {
   const { s, files } = lastResult, folders = [...new Set(files.map(f => f.folder))];
-  $("sheetTitle").textContent = `${files.length} filer eksportert`;
+  $("sheetTitle").textContent = `${files.length} files exported`;
   $("tabs").innerHTML = folders.map((f, i) => { const x = files.find(q => q.folder === f); return `<button type="button" class="tab" role="tab" aria-selected="${i === idx}" data-i="${i}">${x.d === 1 ? "1:1" : "1/" + x.d} · ${x.tw}×${x.th}</button>`; }).join("");
   $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => openSheet(+b.dataset.i));
   const folder = folders[idx], list = files.filter(f => f.folder === folder);
@@ -658,7 +664,7 @@ function openSheet(idx) {
   if (s.fit === "stretch") g.drawImage(src, 0, 0, full.width, full.height); else g.drawImage(src, 0, full.height - H * sc, W * sc, H * sc);
   const body = $("sheetBody");
   const realFolder = (lastResult.folders || []).find(p => p.endsWith(folder));
-  body.innerHTML = `<div class="folder-path">${esc(s.out)}\\<b>${esc(folder)}</b>\\</div>${realFolder ? `<button type="button" class="openf" id="openF">Åpne mappen</button><div style="height:12px"></div>` : ""}<div class="tiles" style="grid-template-columns:repeat(${s.tx},minmax(0,1fr))"></div><p class="sheet-note">${APP ? "" : "Simulert eksport. "}Rekkefølgen følger UDIM-rutenettet, med 1001 nede til venstre. Eksporter på nytt med samme valg for å se varselet om overskriving.</p>`;
+  body.innerHTML = `<div class="folder-path">${esc(s.out)}\\<b>${esc(folder)}</b>\\</div>${realFolder ? `<button type="button" class="openf" id="openF">Open folder</button><div style="height:12px"></div>` : ""}<div class="tiles" style="grid-template-columns:repeat(${s.tx},minmax(0,1fr))"></div><p class="sheet-note">${APP ? "" : "Simulated export. "}Tiles are laid out like the UDIM grid, with 1001 at the bottom left.</p>`;
   const host = body.querySelector(".tiles"), tW = btw * sc, tH = bth * sc;
   list.sort((a, b) => b.v - a.v || a.u - b.u).forEach(f => {
     const el = document.createElement("div"); el.className = "tile";
@@ -678,20 +684,21 @@ $("sheetX").onclick = closeSheet; $("sheetBg").onclick = closeSheet;
 // ---------- Innlasting ----------
 function loadNative(r) {
   if (!r) return;
-  if (!r.ok) return toast(r.error);
+  if (!r.ok) return startError(r.error);
   const img = new Image();
   img.onload = () => { realLoaded = true; setSource(img, r.name, r.label, r.width, r.height); };
   img.src = r.preview;
 }
 window.onNativeImage = loadNative;
-window.onExportProgress = (d, t, m) => { $("fill").style.width = d / t * 100 + "%"; $("exportLbl").textContent = `Eksporterer ${d} av ${t}`; };
+window.onExportProgress = (d, t, m) => { $("fill").style.width = d / t * 100 + "%"; $("exportLbl").textContent = `Exporting ${d} of ${t}`; };
 function loadFile(file) {
-  if (!file || !file.type.startsWith("image/")) { $("srcSize").textContent = "bruk PNG eller JPG i prototypen"; return; }
+  if (!file || !file.type.startsWith("image/")) { startError("The browser preview can only open PNG, JPG and WebP. The installed app opens all formats."); return; }
   const img = new Image();
   img.onload = () => setSource(img, file.name.replace(/\.[^.]+$/, ""), file.name);
+  img.onerror = () => startError("Could not read that image.");
   img.src = URL.createObjectURL(file);
 }
-$("srcBtn").onclick = async () => APP ? loadNative(await api().open_image()) : $("file").click();
+$("srcBtn").onclick = () => importImage();
 $("file").onchange = e => loadFile(e.target.files[0]);
 $("pickDir").onclick = async () => {
   if (!APP) { $("outDir").focus(); $("outDir").select(); return; }
@@ -733,7 +740,7 @@ window.addEventListener("pywebviewready", initApp);
 let updInfo = null;
 async function checkUpdate(quiet) {
   const b = $("updBtn");
-  if (!APP) { showUpd({ state: "dev", message: "Oppdatering finnes bare i den installerte appen." }); return; }
+  if (!APP) { showUpd({ state: "dev", message: "Updates are only available in the installed app." }); return; }
   b.classList.add("spin");
   const r = await api().check_update();
   b.classList.remove("spin");
@@ -742,26 +749,32 @@ async function checkUpdate(quiet) {
   if (!quiet || r.state === "available") showUpd(r);
 }
 function showUpd(r) {
-  const titles = { uptodate: "Du er oppdatert", available: "Ny versjon klar", building: "Ny versjon bygges", error: "Kunne ikke sjekke", dev: "Utviklerversjon" };
-  $("updTitle").textContent = titles[r.state] || "Oppdatering";
+  const titles = { uptodate: "You are up to date", available: "New version ready", building: "New version is building", error: "Could not check", dev: "Development version" };
+  $("updTitle").textContent = titles[r.state] || "Update";
   $("updDot").className = "upd-dot " + ({ uptodate: "ok", available: "new", building: "new", error: "err" }[r.state] || "");
   $("updMsg").textContent = r.message || "";
   $("updChanges").innerHTML = (r.changes || []).map(c => `<li>${esc(c)}</li>`).join("");
-  $("updMeta").textContent = r.currentCommit ? `din versjon ${r.currentCommit} · main ${r.mainCommit}` : "";
+  $("updMeta").textContent = r.currentCommit ? `your version ${r.currentCommit} · main ${r.mainCommit}` : "";
   $("updGo").hidden = r.state !== "available";
   $("updPop").hidden = false;
 }
-$("updBtn").onclick = e => { e.stopPropagation(); if (!$("updPop").hidden) { $("updPop").hidden = true; return; } showUpd({ state: "", message: "Sjekker GitHub…" }); checkUpdate(false); };
+$("updBtn").onclick = e => { e.stopPropagation(); if (!$("updPop").hidden) { $("updPop").hidden = true; return; } showUpd({ state: "", message: "Checking GitHub…" }); checkUpdate(false); };
 $("updPop").onclick = e => e.stopPropagation();
 document.addEventListener("click", () => { if (!$("updGo").disabled) $("updPop").hidden = true; });
-window.onUpdateProgress = p => { $("updFill").style.width = p * 100 + "%"; $("updGoLbl").textContent = `Laster ned ${Math.round(p * 100)} %`; };
+window.onUpdateProgress = p => { $("updFill").style.width = p * 100 + "%"; $("updGoLbl").textContent = `Downloading ${Math.round(p * 100)}%`; };
 $("updGo").onclick = async () => {
-  $("updGo").disabled = true; $("updGoLbl").textContent = "Laster ned…";
+  $("updGo").disabled = true; $("updGoLbl").textContent = "Downloading…";
   const r = await api().install_update(updInfo.url);
-  if (r.ok) $("updGoLbl").textContent = "Installerer, appen starter på nytt…";
-  else { $("updGo").disabled = false; $("updGoLbl").textContent = "Prøv igjen"; $("updMsg").textContent = r.error; }
+  if (r.ok) $("updGoLbl").textContent = "Installing, the app will restart…";
+  else { $("updGo").disabled = false; $("updGoLbl").textContent = "Try again"; $("updMsg").textContent = r.error; }
 };
 
-setSource(makeSample(), "Rock_Wall", "Eksempelbilde");
+function startError(msg) { if ($("app").hidden) $("startErr").textContent = msg; else toast(msg); }
+const importImage = async () => APP ? loadNative(await api().open_image()) : $("file").click();
+$("importBtn").onclick = importImage;
+const sd = $("startDrop");
+sd.addEventListener("dragover", e => { e.preventDefault(); sd.classList.add("over"); });
+sd.addEventListener("dragleave", () => sd.classList.remove("over"));
+sd.addEventListener("drop", e => { e.preventDefault(); sd.classList.remove("over"); if (!APP) loadFile(e.dataTransfer.files[0]); });
 if (window.pywebview?.api?.info) initApp();
 </script>

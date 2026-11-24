@@ -26,7 +26,7 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Languages]
-Name: "norwegian"; MessagesFile: "compiler:Languages\Norwegian.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -43,4 +43,4 @@ Name: "{autodesktop}\UDIM Tiler"; Filename: "{app}\UDIM Tiler.exe"; Tasks: deskt
 
 [Run]
 ; Starter appen etter installasjon, også etter stille oppdatering
-Filename: "{app}\UDIM Tiler.exe"; Description: "Start UDIM Tiler"; Flags: nowait postinstall
+Filename: "{app}\UDIM Tiler.exe"; Description: "Launch UDIM Tiler"; Flags: nowait postinstall

@@ -42,20 +42,20 @@ def check() -> dict:
     try:
         head = _get(f"{API}/commits/main")
     except Exception as e:  # noqa: BLE001
-        return {"state": "error", "message": f"Fikk ikke kontakt med GitHub: {e}"}
+        return {"state": "error", "message": f"Could not reach GitHub: {e}"}
     main_sha = head["sha"]
     info = {"current": VERSION, "currentCommit": COMMIT[:7], "mainCommit": main_sha[:7]}
 
     if COMMIT == "dev":
-        return {**info, "state": "dev", "message": "Utviklerversjon: oppdatering er bare tilgjengelig i installert app."}
+        return {**info, "state": "dev", "message": "Development version: updates are only available in the installed app."}
     if main_sha == COMMIT:
-        return {**info, "state": "uptodate", "message": "Du har siste versjon."}
+        return {**info, "state": "uptodate", "message": "You have the latest version."}
 
     changes = []
     try:
         cmp = _get(f"{API}/compare/{COMMIT}...{main_sha}")
         if cmp.get("status") == "behind":
-            return {**info, "state": "uptodate", "message": "Du har en nyere versjon enn main."}
+            return {**info, "state": "uptodate", "message": "Your version is newer than main."}
         changes = [c["commit"]["message"].splitlines()[0] for c in cmp.get("commits", [])][-10:]
     except Exception:  # noqa: BLE001
         pass
@@ -68,16 +68,16 @@ def check() -> dict:
     asset = next((a for a in (rel or {}).get("assets", []) if a["name"] == ASSET_NAME), None)
     if not rel or not asset or _release_commit(rel) != main_sha:
         return {**info, "state": "building",
-                "message": "Det finnes endringer på main, men den nye installeren er ikke ferdig bygget ennå. Prøv igjen om noen minutter."}
+                "message": "There are new changes on main, but the installer is still being built. Try again in a few minutes."}
     return {**info, "state": "available", "version": rel.get("name") or rel.get("tag_name"),
             "url": asset["browser_download_url"], "size": asset.get("size", 0),
-            "message": f"Ny versjon {rel.get('name') or rel.get('tag_name')} er klar."}
+            "message": f"{rel.get('name') or rel.get('tag_name')} is ready to install."}
 
 
 def download_and_install(url: str, progress=None) -> None:
     """Laster ned installeren, starter den stille og avslutter appen."""
     if not sys.platform.startswith("win"):
-        raise RuntimeError("Automatisk installasjon fungerer bare på Windows.")
+        raise RuntimeError("Automatic install only works on Windows.")
     dst = os.path.join(tempfile.gettempdir(), ASSET_NAME)
     req = urllib.request.Request(url, headers={"User-Agent": "UDIM-Tiler-updater"})
     with urllib.request.urlopen(req, timeout=60) as r, open(dst, "wb") as f:
