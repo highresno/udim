@@ -69,7 +69,7 @@ def main() -> int:
     api = Api()
     window = webview.create_window(
         f"UDIM Tiler {VERSION}", url=resource("ui", "index.html"), js_api=api,
-        width=1440, height=900, min_size=(980, 640), background_color="#0f1115",
+        width=1440, height=900, min_size=(980, 640), background_color="#eef0f4",
     )
     api.attach(window)
 
@@ -82,7 +82,7 @@ def main() -> int:
         try:
             window.dom.document.events.drop += DOMEventHandler(on_drop, True, True)
         except Exception as e:  # noqa: BLE001
-            print("Dra-og-slipp ikke tilgjengelig:", e)
+            print("Drag and drop not available:", e)
 
     window.events.loaded += on_loaded
     webview.start(private_mode=False)

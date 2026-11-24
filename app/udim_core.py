@@ -62,11 +62,11 @@ class SourceImage:
 def load_image(path: str) -> SourceImage:
     inp = oiio.ImageInput.open(path)
     if inp is None:
-        raise IOError(f"Kunne ikke åpne {path}: {oiio.geterror()}")
+        raise IOError(f"Could not open {path}: {oiio.geterror()}")
     try:
         px = inp.read_image("float")
         if px is None:
-            raise IOError(f"Kunne ikke lese {path}: {inp.geterror()}")
+            raise IOError(f"Could not read {path}: {inp.geterror()}")
     finally:
         inp.close()
     px = np.asarray(px, dtype=np.float32)
@@ -265,9 +265,9 @@ def write_tile(path: str, px: np.ndarray, s: ExportSettings) -> None:
 def export(src: SourceImage, s: ExportSettings, progress=None, cancelled=None) -> list[str]:
     """Eksporterer alle valgte oppløsninger. progress(done, total, msg)."""
     if not 1 <= s.tiles_x <= 10:
-        raise ValueError("UDIM tillater 1–10 tiles i X-retning.")
+        raise ValueError("UDIM allows 1 to 10 tiles in X.")
     if s.fmt == "JPG" and s.channels == "RGBA":
-        raise ValueError("JPG støtter ikke alfa.")
+        raise ValueError("JPG does not support alpha.")
 
     src_linear = {"auto": src.is_linear, "srgb": False, "linear": True}[s.source_space]
     canvas = fit_canvas(src.pixels, s)
