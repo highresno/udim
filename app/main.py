@@ -24,6 +24,11 @@ def selftest() -> int:
     from api import make_preview
 
     tmp = tempfile.mkdtemp(prefix="udim_selftest_")
+    # Blender's automatic UDIM detection expects the tile number after a dot.
+    default_settings = core.ExportSettings(name="T", out_root=os.path.join(tmp, "out"))
+    assert core.file_name(default_settings, 1001, 4320, 4320) == "T_4320x4320.1001.png"
+    legacy_settings = core.ExportSettings(name="T", out_root=os.path.join(tmp, "out"), separator="_")
+    assert core.file_name(legacy_settings, 1001, 4320, 4320) == "T_4320x4320_1001.png"
     img = np.zeros((301, 517, 4), np.float32)
     img[..., 0] = np.linspace(0, 1, 517)[None]
     img[..., 1] = np.linspace(0, 1, 301)[:, None]
