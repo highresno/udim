@@ -482,7 +482,9 @@ const project = { path: null, label: null, dirty: false };
 let localIds = 0;
 
 const DEFAULTS = { tx: 2, ty: 1, fit: "pad", scales: [1], fmt: "PNG", ch: "RGB", depth: "8", codec: "zip", comp: 50,
-  // Blender detects UDIM sets reliably when the tile number follows a dot:\n  // Name_1024x1024.1001.png.\n  sep: ".", space: "auto", convert: true, filter: "Lanczos" };
+  // Blender detects UDIM sets reliably when the tile number follows a dot:
+  // Name_1024x1024.1001.png.
+  sep: ".", space: "auto", convert: true, filter: "Lanczos" };
 
 function addDoc(img, info) {
   const W = info.width || img.naturalWidth, H = info.height || img.naturalHeight;
