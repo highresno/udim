@@ -100,7 +100,8 @@ class ExportSettings:
     exr_codec: str = "zip"
     source_space: str = "auto"       # auto | srgb | linear
     convert_color: bool = True       # sRGB->lineær for EXR, lineær->sRGB for PNG/JPG
-    # A dot before the tile number is the Blender-friendly UDIM convention.\n    separator: str = "."             # "." -> Navn.1001.png, "_" -> Navn_1001.png
+    # A dot before the tile number is the Blender-friendly UDIM convention.
+    separator: str = "."             # "." -> Navn.1001.png, "_" -> Navn_1001.png
 
 
 def udim_number(u: int, v: int) -> int:
