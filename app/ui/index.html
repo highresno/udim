@@ -552,14 +552,15 @@ function writeForm(s) {
   $("codec").value = s.codec; $("comp").value = s.comp; $("space").value = s.space; $("convert").checked = s.convert; $("filter").value = s.filter;
   $("depthSeg").dataset.key = ""; syncFormat(); setRadio("depth", s.depth);
 }
-const S = () => ({ ...cur.settings, name: cur.settings.name || "Name", doc: cur.id });
+const safeName = n => (n || "").trim().replace(/[%<>:"\/\\|?*]/g, "_") || "Name";
+const S = () => ({ ...cur.settings, name: safeName(cur.settings.name), doc: cur.id });
 
 // ---------- Logikk ----------
 const udim = (u, v) => 1001 + u + 10 * v;
 const baseTile = (w, h, s) => s.fit === "crop" ? [Math.max(1, Math.floor(w / s.tx)), Math.max(1, Math.floor(h / s.ty))] : [Math.ceil(w / s.tx), Math.ceil(h / s.ty)];
 const tileSize = (w, h, s, d) => baseTile(w, h, s).map(n => Math.max(1, Math.round(n / d)));
 const levelCodecs = ["zip", "zips", "dwaa", "dwab"];
-const compTag = s => s.fmt === "PNG" ? s.comp + "%" : s.fmt === "JPG" ? "q" + Math.max(1, s.comp) : levelCodecs.includes(s.codec) ? `${s.codec}_${s.comp}%` : s.codec;
+const compTag = s => s.fmt === "PNG" ? s.comp + "pct" : s.fmt === "JPG" ? "q" + Math.max(1, s.comp) : levelCodecs.includes(s.codec) ? `${s.codec}_${s.comp}pct` : s.codec;
 const folderName = (s, tw, th) => `${s.name}_${s.fmt}_${s.ch}_${{ "8": "8bit", "16": "16bit", half: "half", float: "float" }[s.depth]}_${compTag(s)}_${tw}_${th}`;
 const fileName = (s, n, tw, th) => `${s.name}_${tw}x${th}${s.sep}${n}.${s.fmt.toLowerCase()}`;
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

@@ -126,11 +126,11 @@ def ext_for(fmt: str) -> str:
 
 def describe_compression(s: ExportSettings) -> str:
     if s.fmt == "PNG":
-        return f"{s.compression}%"
+        return f"{s.compression}pct"
     if s.fmt == "JPG":
         return f"q{s.compression}"
     if s.exr_codec in EXR_LEVEL_CODECS:
-        return f"{s.exr_codec}_{s.compression}%"
+        return f"{s.exr_codec}_{s.compression}pct"
     return s.exr_codec
 
 

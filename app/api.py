@@ -9,6 +9,7 @@ import base64
 import itertools
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -26,9 +27,14 @@ PROJECT_TYPES = ("UDIM Tiler project (*.udimt)",)
 PREVIEW_MAX = 1800
 
 
+def safe_name(name) -> str:
+    """% ødelegger Blenders <UDIM>-oppslag (stien brukes som printf-mønster); <>:"/\\|?* er ugyldige i Windows."""
+    return re.sub(r'[%<>:"/\\|?*]', "_", (name or "").strip()) or "Name"
+
+
 def to_settings(d: dict) -> core.ExportSettings:
     return core.ExportSettings(
-        name=(d.get("name") or "Name").strip(),
+        name=safe_name(d.get("name")),
         out_root=(d.get("out") or "").strip(),
         tiles_x=int(d["tx"]), tiles_y=int(d["ty"]),
         fit_mode=d.get("fit", "pad"),

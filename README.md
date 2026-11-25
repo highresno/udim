@@ -23,7 +23,7 @@ Hver push til `main` bygger en ny installer (tar ca. 5–10 minutter) og publise
 - Ujevn deling: fyll ut, beskjær eller strekk.
 - Oppløsninger 1:1, 1/2, 1/4, 1/8, gjerne flere samtidig. Hele bildet skaleres før deling, så det blir ingen skjøter.
 - PNG: BW/RGB/RGBA, 8/16 bit, komprimering. EXR: BW/RGB/RGBA, half/float, 10 codecs med nivå for zip/dwa. JPG: BW/RGB, kvalitet.
-- Mappe: `Navn_PNG_BW_16bit_50%_2048_2048` (størrelse per tile). Filer: `Navn_2048x2048.1001.png` som standard (Blender-kompatibelt) eller `Navn_2048x2048_1001.png`.
+- Mappe: `Navn_PNG_BW_16bit_50pct_2048_2048` (størrelse per tile). Filer: `Navn_2048x2048.1001.png` som standard (Blender-kompatibelt) eller `Navn_2048x2048_1001.png`.
 - Fargerom: EXR lagres lineært, PNG/JPG som sRGB.
 
 ## Utvikling
